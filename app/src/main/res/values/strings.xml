@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">apnea</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_stop">Stop</string>
+    <string name="started">Started</string>
+    <string name="paused">Paused</string>
+    <string name="stopped">Stopped</string>
+    <string name="legend">Counts / hh:mm:ss (% of total time)</string>
+    <string name="left_side">Left side</string>
+    <string name="right_side">Right side</string>
+    <string name="back">Back</string>
+    <string name="stomach">Stomach</string>
+    <string name="totals">Totals</string>
+</resources>

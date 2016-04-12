@@ -1,0 +1,28 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="eus.elkarmedia.apnea.MainActivity">
+    <item
+        android:id="@+id/action_play"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        android:icon="@drawable/play"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_pause"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        android:icon="@drawable/pause"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_stop"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        android:icon="@drawable/stop"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+</menu>
