@@ -21,6 +21,7 @@ import android.widget.TextView;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -30,14 +31,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private final static int RIGHT = 1;
     private final static int BACK = 2;
     private final static int STOMACH = 3;
+    private final static int UP = 4;
+
+    private final static int STARTED = 1;
+    private final static int PAUSED = 2;
+    private final static int STOPPED = 3;
+
+    private final static int PAUSE = 60*10*1000;
 
     private SensorManager sensorManager;
 
-    private TextView statusTextView, leftTextView, rightTextView, backTextView, stomachTextView, totalsTextView;
-    private double left = 0, right = 0, back = 0, stomach = 0, total = 0, lastUpdateX = 0,
+    private TextView statusTextView, leftTextView, rightTextView, backTextView, stomachTextView,
+            getUpTextView, totalsTextView;
+    private double left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0, lastUpdateX = 0,
             lastUpdateY = 0, lastUpdateZ = 0;
-    private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, totalCount = 0,
-            totalVibrate = 0, totalSound = 0;
+    private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, upCount = 0,
+            totalCount = 0, totalVibrate = 0, totalSound = 0, status = STOPPED;
     private String countTimePct = "%1$d / %2$s  (%3$.2f %%)";
     private Calendar lastUpdate = Calendar.getInstance();
 
@@ -56,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         rightTextView = (TextView) findViewById(R.id.rightTextView);
         backTextView = (TextView) findViewById(R.id.backTextView);
         stomachTextView = (TextView) findViewById(R.id.stomachTextView);
+        getUpTextView = (TextView) findViewById(R.id.getUpTextView);
         totalsTextView = (TextView) findViewById(R.id.totalsTextView);
 
         showTimes();
@@ -72,18 +82,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 total != 0 ? (back/total*100) : 0.0);
         String stomachString = String.format(countTimePct,stomachCount,getHoursMinutesSeconds(stomach),
                 total != 0 ? (stomach/total*100) : 0.0);
+        String upString = String.format(countTimePct,upCount,getHoursMinutesSeconds(up),
+                total != 0 ? (up/total*100) : 0.0);
         String totalsString = String.format(countTimePct,totalCount,getHoursMinutesSeconds(total),100.0);
 
         leftTextView.setText(leftString);
         rightTextView.setText(rightString);
         backTextView.setText(backString);
         stomachTextView.setText(stomachString);
+        getUpTextView.setText(upString);
         totalsTextView.setText(totalsString);
     }
 
     private String getHoursMinutesSeconds(double time) {
         long millis = Double.valueOf(time).longValue();
-        return String.format("%02d:%02d:%02d",
+        return String.format(getResources().getConfiguration().locale,"%02d:%02d:%02d",
                 TimeUnit.MILLISECONDS.toHours(millis),
                 TimeUnit.MILLISECONDS.toMinutes(millis) -
                         TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)), // The change is in this line
@@ -106,6 +119,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int id = item.getItemId();
         switch(id) {
             case R.id.action_play:
+                if (status == STOPPED) {
+                    initializeSleep();
+                    showTimes();
+                }
+                status = STARTED;
                 if (Build.VERSION.SDK_INT >= 19) {
                     sensorManager.registerListener(this,
                             sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -119,9 +137,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
                 return true;
             case R.id.action_pause:
+                status = PAUSED;
                 statusTextView.setText(R.string.paused);
+                sensorManager.unregisterListener(this);
                 return true;
             case R.id.action_stop:
+                status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
                 return true;
@@ -136,33 +157,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         Calendar oneSecondAgo = Calendar.getInstance();
         oneSecondAgo.add(Calendar.SECOND,-1);
+        int lastPosition = getLastPosition();
+        int currentPosition = getPosition(event.values[0],event.values[1],event.values[2]);
+        boolean hasChangedPosition = lastPosition != currentPosition;
         if (lastUpdate.before(oneSecondAgo)) {
-            total+=1000;
             showTimes();
-            Log.d("time","segundua pasata");
-            switch(getLastPosition()) {
+            total+=1000;
+            switch(currentPosition) {
                 case RIGHT:
+                    if (hasChangedPosition) rightCount++;
                     right+=1000;
                     break;
                 case LEFT:
+                    if (hasChangedPosition) leftCount++;
                     left+=1000;
                     break;
                 case BACK:
+                    if (hasChangedPosition) backCount++;
                     back+=1000;
                     break;
                 case STOMACH:
+                    if (hasChangedPosition) stomachCount++;
                     stomach+=1000;
+                    break;
+                case UP:
+                    if (hasChangedPosition) upCount++;
+                    up+=1000;
                     break;
                 default:
                     Log.d("sensor","unknown body position");
             }
+            if (hasChangedPosition) totalCount++;
+            //Update last... for next second
             lastUpdate = oneSecondAgo;
             lastUpdate.add(Calendar.SECOND,1);
             lastUpdateX = event.values[0];
             lastUpdateY = event.values[1];
             lastUpdateZ = event.values[2];
         }
-        Log.d("sensor", Arrays.toString(event.values));
     }
 
     @Override
@@ -171,12 +203,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private int getLastPosition() {
+        if (lastUpdateX == 0 && lastUpdateY == 0 && lastUpdateZ == 0) {
+            return -1;
+        }
         double absX = Math.abs(lastUpdateX);
         double absY = Math.abs(lastUpdateY);
         double absZ = Math.abs(lastUpdateZ);
         if (absX >= absY && absX >= absZ) {
             //zutik dago
-            return -1;
+            return UP;
         } else if (absY >= absX && absY >= absZ) {
             //correct
             if (lastUpdateY > 0) {
@@ -196,8 +231,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    private int getPosition(double y, double z) {
-        if (y > 6) {
+    private int getPosition(double x, double y, double z) {
+        /*if (y > 6) {
             return RIGHT;
         } else if (y < -6) {
             return LEFT;
@@ -207,17 +242,53 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return STOMACH;
         } else {
             return -1;
+        }*/
+        double absX = Math.abs(x);
+        double absY = Math.abs(y);
+        double absZ = Math.abs(z);
+        if (absX >= absY && absX >= absZ) {
+            //zutik dago
+            return UP;
+        } else if (absY >= absX && absY >= absZ) {
+            //correct
+            if (y > 0) {
+                return RIGHT;
+            } else {
+                return LEFT;
+            }
+        } else if (absZ >= absX && absZ >= absY) {
+            //back or stomach
+            if (z > 0) {
+                return BACK;
+            } else {
+                return STOMACH;
+            }
+        } else {
+            return -1;
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    private void initializeSleep() {
+        total = 0;
+        totalCount = 0;
+        up = 0;
+        upCount = 0;
+        back = 0;
+        backCount = 0;
+        left = 0;
+        leftCount = 0;
+        right = 0;
+        rightCount = 0;
+        stomach = 0;
+        stomachCount = 0;
+        lastUpdate = Calendar.getInstance();
+        lastUpdate.setTimeInMillis(0);
+        lastUpdateX = 0;
+        lastUpdateY = 0;
+        lastUpdateZ = 0;
+        status = STOPPED;
+        totalVibrate = 0;
+        totalSound = 0;
     }
 
-    @Override
-    protected void onPause() {
-        // unregister listener
-        super.onPause();
-    }
 }
