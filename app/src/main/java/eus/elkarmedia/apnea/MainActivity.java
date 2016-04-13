@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -97,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         updateVarsFromPreferences();
-        Log.d("resume","resume");
     }
 
     private void showTimes() {
@@ -269,11 +269,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void sound() {
         if (!player.isPlaying()) {
-            try {
-                player.setLooping(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            player.setLooping(true);
             player.start();
             totalSound++;
         } else {
@@ -307,6 +303,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private int getPosition(double x, double y, double z) {
+        if (!ORIENTATION_LEFT) {
+            y = -y;
+        }
         double absX = Math.abs(x);
         double absY = Math.abs(y);
         double absZ = Math.abs(z);
