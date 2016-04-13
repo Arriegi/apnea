@@ -1,0 +1,54 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="alarm_stomach_bool"
+        android:summary="@string/pref_description_alarm_stomach"
+        android:title="@string/pref_title_alarm_stomach" />
+
+    <ListPreference
+        android:defaultValue="10"
+        android:entries="@array/pref_pause_in_minutes_list_titles"
+        android:entryValues="@array/pref_pause_in_minutes_list_values"
+        android:key="pause_in_minutes"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_pause_in_minutes" />
+
+    <ListPreference
+        android:defaultValue="Left"
+        android:entries="@array/pref_device_orientation_list_titles"
+        android:entryValues="@array/pref_device_orientation_list_values"
+        android:key="device_orientation"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_device_orientation" />
+
+    <ListPreference
+        android:defaultValue="4"
+        android:entries="@array/pref_volume_raise_list_titles"
+        android:entryValues="@array/pref_volume_raise_list_values"
+        android:key="volume_raise"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_volume_raise" />
+
+    <ListPreference
+        android:defaultValue="3"
+        android:entries="@array/pref_seconds_to_vibrate_list_titles"
+        android:entryValues="@array/pref_seconds_to_vibrate_list_values"
+        android:key="seconds_to_vibrate"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_seconds_to_vibrate" />
+
+    <ListPreference
+        android:defaultValue="12"
+        android:entries="@array/pref_seconds_to_sound_list_titles"
+        android:entryValues="@array/pref_seconds_to_sound_list_values"
+        android:key="seconds_to_sound"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_seconds_to_sound" />
+
+</PreferenceScreen>
