@@ -1,4 +1,4 @@
-package eus.elkarmedia.apnea;
+package eus.arriegi.apnea;
 
 import android.content.res.Configuration;
 import android.os.Bundle;

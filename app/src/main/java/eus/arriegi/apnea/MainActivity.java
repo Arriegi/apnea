@@ -1,4 +1,4 @@
-package eus.elkarmedia.apnea;
+package eus.arriegi.apnea;
 
 import android.content.Context;
 import android.content.Intent;
@@ -22,8 +22,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -45,12 +46,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private double left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0, lastUpdateX = 0,
             lastUpdateY = 0, lastUpdateZ = 0;
     private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, upCount = 0,
-            totalCount = 0, totalVibrate = 0, totalSound = 0, streak = 0;
+            totalCount = 0, totalVibrate = 0, totalSound = 0, streak = 0, pauseLeft = 0;
 
     private int status = STOPPED;
     private int initialVolume, volumeStreak = 0;
     private String countTimePct = "%1$d / %2$s  (%3$.2f %%)";
     private Calendar lastUpdate = Calendar.getInstance();
+    private Timer pauseTimer = new Timer();
 
     private Vibrator vibrator;
     private AudioManager audioManager;
@@ -150,33 +152,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int id = item.getItemId();
         switch (id) {
             case R.id.action_play:
+                stopPause();
                 if (status == STOPPED) {
                     initializeSleep();
                     showTimes();
                 }
-                status = STARTED;
-                if (Build.VERSION.SDK_INT >= 19) {
-                    sensorManager.registerListener(this,
-                            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                            SensorManager.SENSOR_DELAY_UI, 1000000);
-                    statusTextView.setText(R.string.started);
-                } else {
-                    sensorManager.registerListener(this,
-                            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                            SensorManager.SENSOR_DELAY_NORMAL);
-                    statusTextView.setText(R.string.started);
-                }
+                startListeningSensor();
                 return true;
             case R.id.action_pause:
+                if (status == PAUSED) {
+                    stopPause();
+                    startPause();
+                    return true;
+                }
                 stopSounds();
                 stopVibrating();
                 status = PAUSED;
                 statusTextView.setText(R.string.paused);
                 sensorManager.unregisterListener(this);
+                startPause();
                 return true;
             case R.id.action_stop:
                 stopSounds();
                 stopVibrating();
+                stopPause();
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
@@ -187,6 +186,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void startListeningSensor() {
+        status = STARTED;
+        if (Build.VERSION.SDK_INT >= 19) {
+            sensorManager.registerListener(this,
+                    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                    SensorManager.SENSOR_DELAY_UI, 1000000);
+            statusTextView.setText(R.string.started);
+        } else {
+            sensorManager.registerListener(this,
+                    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                    SensorManager.SENSOR_DELAY_NORMAL);
+            statusTextView.setText(R.string.started);
         }
     }
 
@@ -290,6 +304,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
     }
 
+    private void startPause() {
+        pauseTimer = new Timer();
+        pauseTimer.schedule(new UpdatePauseTime(),0, 1000);
+    }
+
+    private void stopPause() {
+        pauseLeft = PAUSE;
+        pauseTimer.cancel();
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
@@ -362,7 +386,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         MAX_VOLUME_STREAK_IN_SECONDS = Integer.valueOf(prefs.getString("volume_raise","4"));
         PAUSE = Integer.valueOf(prefs.getString("pause_in_minutes","10")) * 60;
         ALARM_STOMACH = prefs.getBoolean("alarm_stomach_bool",false);
-        ORIENTATION_LEFT = prefs.getString("device_orientation","Left") == "Left";
+        ORIENTATION_LEFT = prefs.getString("device_orientation","Left").equals("Left");
+        if (status != PAUSED) {
+            pauseLeft = PAUSE;
+        }
     }
 
     @Override
@@ -371,5 +398,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stopSounds();
         stopVibrating();
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+    }
+
+    class UpdatePauseTime extends TimerTask {
+
+        private String twoDigitString(int number) {
+            if (number == 0) {
+                return "00";
+            }
+            if (number / 10 == 0) {
+                return "0" + number;
+            }
+            return String.valueOf(number);
+        }
+
+        @Override
+        public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (pauseLeft == 0) {
+                        startListeningSensor();
+                        stopPause();
+                    } else {
+                        int minutes = (pauseLeft % 3600) / 60;
+                        int seconds = pauseLeft % 60;
+                        statusTextView.setText(getString(R.string.paused_for,twoDigitString(minutes) + ":" + twoDigitString(seconds)));
+                        pauseLeft--;
+                    }
+                }
+            });
+        }
     }
 }

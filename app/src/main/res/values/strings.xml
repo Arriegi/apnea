@@ -6,6 +6,7 @@
     <string name="action_stop">Stop</string>
     <string name="started">Started</string>
     <string name="paused">Paused</string>
+    <string name="paused_for">Paused for %1$s</string>
     <string name="stopped">Stopped</string>
     <string name="legend">Counts / hh:mm:ss (% of total time)</string>
     <string name="left_side">Left side</string>
@@ -66,7 +67,7 @@
 
     <string name="pref_title_seconds_to_vibrate">Vibrate after X seconds</string>
     <string-array name="pref_seconds_to_vibrate_list_titles">
-        <item>3 second</item>
+        <item>3 seconds</item>
         <item>6 seconds</item>
         <item>15 seconds</item>
         <item>25 seconds</item>

@@ -1,4 +1,4 @@
-package eus.elkarmedia.apnea;
+package eus.arriegi.apnea;
 
 import org.junit.Test;
 

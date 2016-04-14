@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="eus.elkarmedia.apnea.MainActivity">
+    tools:context="eus.arriegi.apnea.MainActivity">
     <item
         android:id="@+id/action_play"
         android:orderInCategory="100"
