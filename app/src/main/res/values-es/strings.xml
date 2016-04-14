@@ -36,4 +36,63 @@
     <string name="title_activity_settings">Ajustes</string>
     <string name="totalAlarms">Vibraciones: %1$d  -  Alarmas: %2$d</string>
     <string name="totals">Total</string>
+
+    <string-array name="pref_pause_in_minutes_list_titles">
+        <item>5 minutos</item>
+        <item>10 minutos</item>
+        <item>15 minutos</item>
+    </string-array>
+    <string-array name="pref_pause_in_minutes_list_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
+
+    <string-array name="pref_device_orientation_list_titles">
+        <item>Izquierda</item>
+        <item>Derecha</item>
+    </string-array>
+    <string-array name="pref_device_orientation_list_values">
+        <item>Left</item>
+        <item>Right</item>
+    </string-array>
+
+    <string-array name="pref_volume_raise_list_titles">
+        <item>1 segundo</item>
+        <item>2 segundos</item>
+        <item>3 segundos</item>
+        <item>4 segundos</item>
+    </string-array>
+    <string-array name="pref_volume_raise_list_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="pref_seconds_to_vibrate_list_titles">
+        <item>3 segundos</item>
+        <item>6 segundos</item>
+        <item>15 segundos</item>
+        <item>25 segundos</item>
+    </string-array>
+    <string-array name="pref_seconds_to_vibrate_list_values">
+        <item>3</item>
+        <item>6</item>
+        <item>15</item>
+        <item>25</item>
+    </string-array>
+
+    <string-array name="pref_seconds_to_sound_list_titles">
+        <item>6 segundos</item>
+        <item>12 segundos</item>
+        <item>25 segundos</item>
+        <item>35 segundos</item>
+    </string-array>
+    <string-array name="pref_seconds_to_sound_list_values">
+        <item>6</item>
+        <item>12</item>
+        <item>25</item>
+        <item>35</item>
+    </string-array>
 </resources>

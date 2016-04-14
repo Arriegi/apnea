@@ -81,7 +81,7 @@
 
     <string name="pref_title_seconds_to_sound">Raise volume each X seconds</string>
     <string-array name="pref_seconds_to_sound_list_titles">
-        <item>6 second</item>
+        <item>6 seconds</item>
         <item>12 seconds</item>
         <item>25 seconds</item>
         <item>35 seconds</item>
