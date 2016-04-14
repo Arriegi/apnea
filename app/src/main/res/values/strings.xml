@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">apnea</string>
+    <string name="app_name">Apnea Sleep Assistant</string>
     <string name="action_settings">Settings</string>
     <string name="action_play">Play</string>
     <string name="action_pause">Pause</string>

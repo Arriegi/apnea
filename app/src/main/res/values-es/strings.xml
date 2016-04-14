@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apnea Asistende de Sueño</string>
+    <string name="action_pause">Pausar</string>
+    <string name="action_play">Arrancar</string>
+    <string name="action_settings">Ajustes</string>
+    <string name="action_stop">Parar</string>
+    <string name="back">Atrás</string>
+    <string name="getUp">Incorporado</string>
+    <string name="left_side">Izquierda</string>
+    <string name="legend">Cantidad / hh:mm:ss (% total de tiempo)</string>
+    <string name="paused">Pausado</string>
+    <string name="paused_for">Pausado hasta %1$s</string>
+    <string name="pref_default_display_name">John Smith</string>
+    <string name="pref_description_alarm_stomach">Avisa si estás durmiendo boca abajo</string>
+    <string name="pref_header_data_sync">Data &amp; sync</string>
+    <string name="pref_header_general">General</string>
+    <string name="pref_header_notifications">Notificaciones</string>
+    <string name="pref_ringtone_silent">Silencio</string>
+    <string name="pref_title_alarm_stomach">Alarma boca abajo</string>
+    <string name="pref_title_device_orientation">Orientación del dispositivo</string>
+    <string name="pref_title_display_name">Nombre</string>
+    <string name="pref_title_new_message_notifications">Nuevo mensaje de notificaciones</string>
+    <string name="pref_title_pause_in_minutes">Pausa en minutos</string>
+    <string name="pref_title_ringtone">Tono</string>
+    <string name="pref_title_seconds_to_sound">Subir el volumen tras X segundos</string>
+    <string name="pref_title_seconds_to_vibrate">Vibrar tras X segundos</string>
+    <string name="pref_title_sync_frequency">Frecuencia de sincronización</string>
+    <string name="pref_title_system_sync_settings">Ajustes de sinc</string>
+    <string name="pref_title_vibrate">Vibrar</string>
+    <string name="pref_title_volume_raise">Subir el volumen tras X segundos</string>
+    <string name="right_side">Derecha</string>
+    <string name="started">Comenzado</string>
+    <string name="stomach">Boca abajo</string>
+    <string name="stopped">Parado</string>
+    <string name="title_activity_settings">Ajustes</string>
+    <string name="totalAlarms">Vibraciones: %1$d  -  Alarmas: %2$d</string>
+    <string name="totals">Total</string>
+</resources>
