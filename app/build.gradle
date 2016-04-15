@@ -5,10 +5,10 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "eus.elkarmedia.apnea"
+        applicationId "eus.arriegi.apnea"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 3
+        versionCode 4
         versionName "1.0"
     }
     buildTypes {
