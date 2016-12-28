@@ -4,6 +4,7 @@
     <string name="action_pause">Pausar</string>
     <string name="action_play">Arrancar</string>
     <string name="action_settings">Ajustes</string>
+    <string name="action_stats">Estadísticas</string>
     <string name="action_stop">Parar</string>
     <string name="back">Boca abajo</string>
     <string name="getUp">Incorporado</string>
@@ -23,7 +24,7 @@
     <string name="pref_title_new_message_notifications">Nuevo mensaje de notificaciones</string>
     <string name="pref_title_pause_in_minutes">Pausa en minutos</string>
     <string name="pref_title_ringtone">Tono</string>
-    <string name="pref_title_seconds_to_sound">Subir el volumen tras X segundos</string>
+    <string name="pref_title_seconds_to_sound">Empezar a sonar tras X segundos</string>
     <string name="pref_title_seconds_to_vibrate">Vibrar tras X segundos</string>
     <string name="pref_title_sync_frequency">Frecuencia de sincronización</string>
     <string name="pref_title_system_sync_settings">Ajustes de sinc</string>

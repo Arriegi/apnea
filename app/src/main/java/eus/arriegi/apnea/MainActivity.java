@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -41,10 +42,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensorManager;
 
+    private SleepDbHelper dbHelper;
+
     private TextView statusTextView, leftTextView, rightTextView, backTextView, stomachTextView,
             getUpTextView, totalsTextView, totalAlarmsTextView;
-    private double left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0, lastUpdateX = 0,
-            lastUpdateY = 0, lastUpdateZ = 0;
+    private long left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0;
+    private double lastUpdateX = 0, lastUpdateY = 0, lastUpdateZ = 0;
     private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, upCount = 0,
             totalCount = 0, totalVibrate = 0, totalSound = 0, streak = 0, pauseLeft = 0;
 
@@ -75,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setSupportActionBar(toolbar);
         lastUpdate.setTimeInMillis(0);
 
+        dbHelper = new SleepDbHelper(this);
+
         //Instantiate textViews
         statusTextView = (TextView) findViewById(R.id.statusTextView);
         leftTextView = (TextView) findViewById(R.id.leftTextView);
@@ -104,15 +109,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void showTimes() {
         String leftString = String.format(countTimePct, leftCount, getHoursMinutesSeconds(left),
-                total != 0 ? (left / total * 100) : 0.0);
+                total != 0 ? (left * 100/ total ) : 0.0);
         String rightString = String.format(countTimePct, rightCount, getHoursMinutesSeconds(right),
-                total != 0 ? (right / total * 100) : 0.0);
+                total != 0 ? (right * 100 / total ) : 0.0);
         String backString = String.format(countTimePct, backCount, getHoursMinutesSeconds(back),
-                total != 0 ? (back / total * 100) : 0.0);
+                total != 0 ? (back * 100 / total ) : 0.0);
         String stomachString = String.format(countTimePct, stomachCount, getHoursMinutesSeconds(stomach),
-                total != 0 ? (stomach / total * 100) : 0.0);
+                total != 0 ? (stomach * 100/ total ) : 0.0);
         String upString = String.format(countTimePct, upCount, getHoursMinutesSeconds(up),
-                total != 0 ? (up / total * 100) : 0.0);
+                total != 0 ? (up * 100 / total ) : 0.0);
         String totalsString = String.format(countTimePct, totalCount, getHoursMinutesSeconds(total), 100.0);
 
         leftTextView.setText(leftString);
@@ -176,12 +181,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stopSounds();
                 stopVibrating();
                 stopPause();
+                Sleep newSleep = new Sleep(left, leftCount, right, rightCount, back, backCount,
+                        stomach, stomachCount, up, upCount, (left+right+back+stomach+up),
+                        (leftCount+rightCount+stomachCount+upCount+backCount) );
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                newSleep.storeOnDB(db);
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.action_stats:
+                intent = new Intent(this,StatsActivity.class);
                 startActivity(intent);
                 return true;
             default:
@@ -397,6 +411,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onDestroy();
         stopSounds();
         stopVibrating();
+        dbHelper.close();
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
     }
 

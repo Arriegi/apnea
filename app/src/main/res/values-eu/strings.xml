@@ -3,6 +3,7 @@
     <string name="app_name">Apnea Laguntzailea</string>
     <string name="action_pause">Gelditu</string>
     <string name="action_play">Hasi</string>
+    <string name="action_stats">Estatistikak</string>
     <string name="action_settings">Aukerak</string>
     <string name="action_stop">Bukatu</string>
     <string name="back">Ahoz behera</string>
@@ -23,7 +24,7 @@
     <string name="pref_title_new_message_notifications">Mezu berria</string>
     <string name="pref_title_pause_in_minutes">Geldiuena minututan</string>
     <string name="pref_title_ringtone">Tono</string>
-    <string name="pref_title_seconds_to_sound">Bolumena igo X segundu hostean</string>
+    <string name="pref_title_seconds_to_sound">Hasi soinua X segundu hostean</string>
     <string name="pref_title_seconds_to_vibrate">Bibratu X segundu hostean</string>
     <string name="pref_title_sync_frequency">Sync frequency</string>
     <string name="pref_title_system_sync_settings">ajustes de sinc</string>
