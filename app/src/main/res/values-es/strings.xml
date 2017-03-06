@@ -6,7 +6,7 @@
     <string name="action_settings">Ajustes</string>
     <string name="action_stats">Estadísticas</string>
     <string name="action_stop">Parar</string>
-    <string name="back">Boca abajo</string>
+    <string name="back">Boca arriba</string>
     <string name="getUp">Incorporado</string>
     <string name="left_side">Izquierda</string>
     <string name="legend">Cantidad / hh:mm:ss (% total de tiempo)</string>

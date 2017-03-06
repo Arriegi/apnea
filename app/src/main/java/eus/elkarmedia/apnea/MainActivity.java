@@ -15,6 +15,7 @@ import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -24,7 +25,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int status = STOPPED;
     private int initialVolume, volumeStreak = 0;
     private String countTimePct = "%1$d / %2$s  (%3$.2f %%)";
-    private Calendar lastUpdate = Calendar.getInstance();
+    private long lastUpdate = 0;
     private Timer pauseTimer = new Timer();
 
     private Vibrator vibrator;
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        lastUpdate.setTimeInMillis(0);
+        lastUpdate = SystemClock.elapsedRealtime();
 
         dbHelper = new SleepDbHelper(this);
 
@@ -225,40 +225,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        Calendar oneSecondAgo = Calendar.getInstance();
-        oneSecondAgo.add(Calendar.SECOND, -1);
         int lastPosition = getLastPosition();
         int currentPosition = getPosition(event.values[0], event.values[1], event.values[2]);
         boolean hasChangedPosition = lastPosition != currentPosition;
-        if (lastUpdate.before(oneSecondAgo)) {
+        long now = SystemClock.elapsedRealtime();
+        long lapsed = (now - lastUpdate);
+        if (lapsed > 1000) {
             showTimes();
-            total += 1000;
+            total += lapsed;
             switch (currentPosition) {
                 case RIGHT:
                     stopSounds();
                     stopVibrating();
                     if (hasChangedPosition) rightCount++;
-                    right += 1000;
+                    right += lapsed;
                     break;
                 case LEFT:
                     stopSounds();
                     stopVibrating();
                     if (hasChangedPosition) leftCount++;
-                    left += 1000;
+                    left += lapsed;
                     break;
                 case BACK:
                     if (hasChangedPosition) backCount++;
-                    back += 1000;
+                    back += lapsed;
                     break;
                 case STOMACH:
                     if (hasChangedPosition) stomachCount++;
-                    stomach += 1000;
+                    stomach += lapsed;
                     break;
                 case UP:
                     stopSounds();
                     stopVibrating();
                     if (hasChangedPosition) upCount++;
-                    up += 1000;
+                    up += lapsed;
                     break;
                 default:
                     Log.d("sensor", "unknown body position");
@@ -278,8 +278,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 sound();
             }
             //Update last... for next second
-            lastUpdate = oneSecondAgo;
-            lastUpdate.add(Calendar.SECOND, 1);
+            lastUpdate = now;
             lastUpdateX = event.values[0];
             lastUpdateY = event.values[1];
             lastUpdateZ = event.values[2];
@@ -387,8 +386,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         rightCount = 0;
         stomach = 0;
         stomachCount = 0;
-        lastUpdate = Calendar.getInstance();
-        lastUpdate.setTimeInMillis(0);
+        lastUpdate = SystemClock.elapsedRealtime();
         lastUpdateX = 0;
         lastUpdateY = 0;
         lastUpdateZ = 0;
