@@ -4,6 +4,7 @@
     <string name="action_pause">Gelditu</string>
     <string name="action_play">Hasi</string>
     <string name="action_stats">Estatistikak</string>
+    <string name="action_clear_stats">Estatistikak ezabatu</string>
     <string name="action_settings">Aukerak</string>
     <string name="action_stop">Bukatu</string>
     <string name="back">Ahoz behera</string>
@@ -37,6 +38,10 @@
     <string name="title_activity_settings">Aukerak</string>
     <string name="totalAlarms">Bibrazioak: %1$d - Alarmak: %2$d</string>
     <string name="totals">Guztira</string>
+
+    <string name="dialog_sure_clear_stats">Ziur zaude estadistikak ezabatu nahi dituzula?</string>
+    <string name="clear">Bai, ezabatu</string>
+    <string name="cancel">Ezeztatu</string>
 
     <string-array name="pref_pause_in_minutes_list_titles">
         <item>5 minutu</item>

@@ -1,8 +1,11 @@
 package eus.elkarmedia.apnea;
 
+import android.app.FragmentManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
@@ -28,6 +31,8 @@ public class StatsActivity extends AppCompatActivity {
         dbHelper = new SleepDbHelper(this);
 
         LineChart chart = (LineChart) findViewById(R.id.chart);
+        chart.getAxisLeft().setDrawGridLines(false);
+        chart.getXAxis().setDrawGridLines(false);
 
         List<Entry> entriesBack = new ArrayList<Entry>();
         List<Entry> entriesLeft = new ArrayList<Entry>();
@@ -93,6 +98,30 @@ public class StatsActivity extends AppCompatActivity {
         LineData data = new LineData(dataSets);
         chart.setData(data);
         chart.invalidate();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_stats, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.action_clear_stats:
+                FragmentManager fm = getFragmentManager();
+                ClearStatsDialogFragment dialogFragment = new ClearStatsDialogFragment ();
+                dialogFragment.show(fm, "Sample Fragment");
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

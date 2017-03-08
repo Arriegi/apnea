@@ -55,6 +55,10 @@ public class SleepDbHelper extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
+    public void deleteSleeps(SQLiteDatabase db) {
+        db.delete(Sleep.TABLE_NAME, null, null);
+    }
+
     public List<Sleep> getSleeps(SQLiteDatabase db) {
         List<Sleep> sleeps = new ArrayList<>();
         String[] projection = {
@@ -74,7 +78,7 @@ public class SleepDbHelper extends SQLiteOpenHelper {
         };
 
         String sortOrder =
-                Sleep._ID + " DESC";
+                Sleep._ID + " ASC";
 
         Cursor cursor = db.query(
                 Sleep.TABLE_NAME,                     // The table to query

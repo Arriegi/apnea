@@ -4,6 +4,7 @@
     <string name="action_pause">Pausar</string>
     <string name="action_play">Arrancar</string>
     <string name="action_settings">Ajustes</string>
+    <string name="action_clear_stats">Borrar estadísticas</string>
     <string name="action_stats">Estadísticas</string>
     <string name="action_stop">Parar</string>
     <string name="back">Boca arriba</string>
@@ -37,6 +38,10 @@
     <string name="title_activity_settings">Ajustes</string>
     <string name="totalAlarms">Vibraciones: %1$d  -  Alarmas: %2$d</string>
     <string name="totals">Total</string>
+
+    <string name="dialog_sure_clear_stats">¿Está seguro de que desea borrar las estadísticas?</string>
+    <string name="clear">Sí, borrar</string>
+    <string name="cancel">Cancelar</string>
 
     <string-array name="pref_pause_in_minutes_list_titles">
         <item>5 minutos</item>

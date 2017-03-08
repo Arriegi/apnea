@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Apnea Sleep Assistant</string>
     <string name="action_settings">Settings</string>
+    <string name="action_clear_stats">Clear stats</string>
     <string name="action_stats">Stats</string>
     <string name="action_play">Play</string>
     <string name="action_pause">Pause</string>
@@ -17,6 +18,10 @@
     <string name="getUp">Gotten up</string>
     <string name="totals">Totals</string>
     <string name="title_activity_settings">Settings</string>
+
+    <string name="dialog_sure_clear_stats">Are you sure you want to clear stats?</string>
+    <string name="clear">Yes, clear stats</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Strings related to Settings -->
 
