@@ -414,6 +414,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onDestroy();
         stopSounds();
         stopVibrating();
+        sensorManager.unregisterListener(this);
         dbHelper.close();
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
     }

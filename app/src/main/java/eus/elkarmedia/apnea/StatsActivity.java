@@ -29,18 +29,20 @@ public class StatsActivity extends AppCompatActivity {
         setTitle(R.string.action_stats);
 
         dbHelper = new SleepDbHelper(this);
+        List<Sleep> sleeps = dbHelper.getSleeps(dbHelper.getReadableDatabase());
 
         LineChart chart = (LineChart) findViewById(R.id.chart);
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getXAxis().setDrawGridLines(false);
+        chart.getAxisRight().setEnabled(false);
+        chart.getXAxis().setAxisMinimum(0);
+        chart.getXAxis().setAxisMaximum(sleeps.size());
 
         List<Entry> entriesBack = new ArrayList<Entry>();
         List<Entry> entriesLeft = new ArrayList<Entry>();
         List<Entry> entriesRight = new ArrayList<Entry>();
         List<Entry> entriesStomach = new ArrayList<Entry>();
         List<Entry> entriesUp = new ArrayList<Entry>();
-
-        List<Sleep> sleeps = dbHelper.getSleeps(dbHelper.getReadableDatabase());
 
         for (int i = 0; i < sleeps.size(); i++) {
             // turn your data into Entry objects
