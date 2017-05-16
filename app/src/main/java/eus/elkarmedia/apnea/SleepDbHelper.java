@@ -31,7 +31,8 @@ public class SleepDbHelper extends SQLiteOpenHelper {
                     Sleep.UP_TITLE + " INTEGER," +
                     Sleep.UP_COUNT_TITLE + " INTEGER," +
                     Sleep.TOTAL_TITLE + " INTEGER," +
-                    Sleep.TOTAL_COUNT_TITLE + " INTEGER)";
+                    Sleep.TOTAL_COUNT_TITLE + " INTEGER," +
+                    Sleep.SYNC + " INTEGER)";
 
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + Sleep.TABLE_NAME;
@@ -74,7 +75,8 @@ public class SleepDbHelper extends SQLiteOpenHelper {
                 Sleep.UP_TITLE,
                 Sleep.UP_COUNT_TITLE,
                 Sleep.TOTAL_TITLE,
-                Sleep.TOTAL_COUNT_TITLE
+                Sleep.TOTAL_COUNT_TITLE,
+                Sleep.SYNC
         };
 
         String sortOrder =
@@ -103,7 +105,8 @@ public class SleepDbHelper extends SQLiteOpenHelper {
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.UP_TITLE)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.UP_COUNT_TITLE)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.TOTAL_TITLE)),
-                    cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.TOTAL_COUNT_TITLE))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.TOTAL_COUNT_TITLE)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(Sleep.SYNC))
             );
             sleeps.add(sleep);
         }

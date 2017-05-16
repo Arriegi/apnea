@@ -22,12 +22,14 @@ public class Sleep {
     public static final String UP_COUNT_TITLE = "upcount";
     public static final String TOTAL_TITLE = "total";
     public static final String TOTAL_COUNT_TITLE = "totalcount";
+    public static final String SYNC = "synchronized";
 
     long left, leftCount, right, rightCount, back, backCount, stomach, stomachCount, up, upCount,
             total, totalCount;
+    int sync = 0;
 
     public Sleep(long left, long leftCount, long right, long rightCount, long back, long backCount,
-                 long stomach, long stomachCount, long up, long upCount, long total, long totalCount) {
+                 long stomach, long stomachCount, long up, long upCount, long total, long totalCount, int sync) {
         this.left = left;
         this.leftCount = leftCount;
         this.right = right;
@@ -40,6 +42,7 @@ public class Sleep {
         this.upCount = upCount;
         this.total = total;
         this.totalCount = totalCount;
+        this.sync = sync;
     }
 
     public long getLeft() {
@@ -152,6 +155,7 @@ public class Sleep {
         values.put(UP_COUNT_TITLE,upCount);
         values.put(TOTAL_TITLE,total);
         values.put(TOTAL_COUNT_TITLE,totalCount);
+        values.put(SYNC,sync);
         return db.insert(TABLE_NAME,null,values);
     }
 }

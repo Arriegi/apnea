@@ -47,15 +47,15 @@ public class StatsActivity extends AppCompatActivity {
         for (int i = 0; i < sleeps.size(); i++) {
             // turn your data into Entry objects
             Sleep sleep = sleeps.get(i);
-            long back = sleep.getBack() * 100 / sleep.getTotal();
+            long back = sleep.getTotal() == 0 ? 0 : sleep.getBack() * 100 / sleep.getTotal();
             entriesBack.add(new Entry(i, back));
-            long right = sleep.getRight() * 100 / sleep.getTotal();
+            long right = sleep.getTotal() == 0 ? 0 : sleep.getRight() * 100 / sleep.getTotal();
             entriesRight.add(new Entry(i, right));
-            long left = sleep.getLeft() * 100 / sleep.getTotal();
+            long left = sleep.getTotal() == 0 ? 0 : sleep.getLeft() * 100 / sleep.getTotal();
             entriesLeft.add(new Entry(i, left));
-            long stomach = sleep.getStomach() * 100 / sleep.getTotal();
+            long stomach = sleep.getTotal() == 0 ? 0 : sleep.getStomach() * 100 / sleep.getTotal();
             entriesStomach.add(new Entry(i, stomach));
-            long up = sleep.getUp() * 100 / sleep.getTotal();
+            long up = sleep.getTotal() == 0 ? 0 : sleep.getUp() * 100 / sleep.getTotal();
             entriesUp.add(new Entry(i, up));
         }
         if (entriesBack.size() == 0) {

@@ -25,6 +25,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -188,12 +195,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stopPause();
                 Sleep newSleep = new Sleep(left, leftCount, right, rightCount, back, backCount,
                         stomach, stomachCount, up, upCount, (left+right+back+stomach+up),
-                        (leftCount+rightCount+stomachCount+upCount+backCount) );
+                        (leftCount+rightCount+stomachCount+upCount+backCount),0 );
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 newSleep.storeOnDB(db);
+                saveSleepOnCloud();
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -292,6 +300,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             isVibrating = true;
             totalVibrate++;
         }
+    }
+
+    private void saveSleepOnCloud() {
+        // Instantiate the RequestQueue.
+        //TODO gorde zerbitzarian
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://172.26.0.41/";
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("APNEA",response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.getMessage();
+            }
+        });
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 
     private void stopVibrating() {
@@ -462,155 +493,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         editor.commit();
     }
 
-    public long getLeft() {
-        return left;
-    }
-
-    public void setLeft(long left) {
-        this.left = left;
-    }
-
-    public long getRight() {
-        return right;
-    }
-
-    public void setRight(long right) {
-        this.right = right;
-    }
-
-    public long getBack() {
-        return back;
-    }
-
-    public void setBack(long back) {
-        this.back = back;
-    }
-
-    public long getStomach() {
-        return stomach;
-    }
-
-    public void setStomach(long stomach) {
-        this.stomach = stomach;
-    }
-
-    public long getUp() {
-        return up;
-    }
-
     public void setUp(long up) {
         this.up = up;
     }
 
-    public long getTotal() {
-        return total;
-    }
 
-    public void setTotal(long total) {
-        this.total = total;
-    }
-
-    public double getLastUpdateX() {
-        return lastUpdateX;
-    }
-
-    public void setLastUpdateX(double lastUpdateX) {
-        this.lastUpdateX = lastUpdateX;
-    }
-
-    public double getLastUpdateY() {
-        return lastUpdateY;
-    }
-
-    public void setLastUpdateY(double lastUpdateY) {
-        this.lastUpdateY = lastUpdateY;
-    }
-
-    public double getLastUpdateZ() {
-        return lastUpdateZ;
-    }
-
-    public void setLastUpdateZ(double lastUpdateZ) {
-        this.lastUpdateZ = lastUpdateZ;
-    }
-
-    public int getLeftCount() {
-        return leftCount;
-    }
-
-    public void setLeftCount(int leftCount) {
-        this.leftCount = leftCount;
-    }
-
-    public int getRightCount() {
-        return rightCount;
-    }
-
-    public void setRightCount(int rightCount) {
-        this.rightCount = rightCount;
-    }
-
-    public int getBackCount() {
-        return backCount;
-    }
-
-    public void setBackCount(int backCount) {
-        this.backCount = backCount;
-    }
-
-    public int getStomachCount() {
-        return stomachCount;
-    }
-
-    public void setStomachCount(int stomachCount) {
-        this.stomachCount = stomachCount;
-    }
-
-    public int getUpCount() {
-        return upCount;
-    }
-
-    public void setUpCount(int upCount) {
-        this.upCount = upCount;
-    }
-
-    public int getTotalCount() {
-        return totalCount;
-    }
-
-    public void setTotalCount(int totalCount) {
-        this.totalCount = totalCount;
-    }
-
-    public int getTotalVibrate() {
-        return totalVibrate;
-    }
-
-    public void setTotalVibrate(int totalVibrate) {
-        this.totalVibrate = totalVibrate;
-    }
-
-    public int getTotalSound() {
-        return totalSound;
-    }
-
-    public void setTotalSound(int totalSound) {
-        this.totalSound = totalSound;
-    }
-
-    public int getStreak() {
-        return streak;
-    }
-
-    public void setStreak(int streak) {
-        this.streak = streak;
-    }
-
-    public int getPauseLeft() {
-        return pauseLeft;
-    }
-
-    public void setPauseLeft(int pauseLeft) {
-        this.pauseLeft = pauseLeft;
-    }
 }
