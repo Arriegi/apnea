@@ -34,6 +34,7 @@ public class SleepDbHelper extends SQLiteOpenHelper {
                     Sleep.TOTAL_COUNT_TITLE + " INTEGER," +
                     Sleep.SYNC + " INTEGER)";
 
+    private static final String SQL_DELETE_ONE_ENTRY = "DELETE FROM " + Sleep.TABLE_NAME + " WHERE ID = ";
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + Sleep.TABLE_NAME;
 
@@ -58,6 +59,10 @@ public class SleepDbHelper extends SQLiteOpenHelper {
 
     public void deleteSleeps(SQLiteDatabase db) {
         db.delete(Sleep.TABLE_NAME, null, null);
+    }
+
+    public void deleteSleep(Sleep sleep) {
+        this.getWritableDatabase().execSQL(SQL_DELETE_ONE_ENTRY + sleep.getId());
     }
 
     public List<Sleep> getSleeps(SQLiteDatabase db) {
@@ -94,6 +99,7 @@ public class SleepDbHelper extends SQLiteOpenHelper {
 
         while(cursor.moveToNext()) {
             Sleep sleep = new Sleep(
+                    cursor.getLong(cursor.getColumnIndexOrThrow(Sleep._ID)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.LEFT_TITLE)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.LEFT_COUNT_TITLE)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(Sleep.RIGHT_TITLE)),

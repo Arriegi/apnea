@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stopSounds();
                 stopVibrating();
                 stopPause();
-                Sleep newSleep = new Sleep(left, leftCount, right, rightCount, back, backCount,
+                Sleep newSleep = new Sleep(0,left, leftCount, right, rightCount, back, backCount,
                         stomach, stomachCount, up, upCount, (left+right+back+stomach+up),
                         (leftCount+rightCount+stomachCount+upCount+backCount),0 );
                 status = STOPPED;

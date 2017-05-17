@@ -17,6 +17,8 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static eus.elkarmedia.apnea.R.string.back;
+
 public class StatsActivity extends AppCompatActivity {
 
     private SleepDbHelper dbHelper = null;
@@ -47,6 +49,10 @@ public class StatsActivity extends AppCompatActivity {
         for (int i = 0; i < sleeps.size(); i++) {
             // turn your data into Entry objects
             Sleep sleep = sleeps.get(i);
+            if (sleep.getTotal() == 0) {
+                dbHelper.deleteSleep(sleep);
+                continue;
+            }
             long back = sleep.getTotal() == 0 ? 0 : sleep.getBack() * 100 / sleep.getTotal();
             entriesBack.add(new Entry(i, back));
             long right = sleep.getTotal() == 0 ? 0 : sleep.getRight() * 100 / sleep.getTotal();
@@ -75,7 +81,7 @@ public class StatsActivity extends AppCompatActivity {
         }
         List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
 
-        LineDataSet setComp1 = new LineDataSet(entriesBack, getString(R.string.back));
+        LineDataSet setComp1 = new LineDataSet(entriesBack, getString(back));
         setComp1.setAxisDependency(YAxis.AxisDependency.LEFT);
         setComp1.setColor(Color.BLACK);
         LineDataSet setComp2 = new LineDataSet(entriesRight, getString(R.string.right_side));
