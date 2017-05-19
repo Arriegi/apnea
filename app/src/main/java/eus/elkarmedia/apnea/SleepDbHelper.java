@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SleepDbHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "Sleep.db";
 
     private static final String SQL_CREATE_ENTRIES =
@@ -49,8 +49,10 @@ public class SleepDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(SQL_DELETE_ENTRIES);
-        onCreate(db);
+        if (oldVersion == 1) {
+            db.execSQL("ALTER TABLE " + Sleep.TABLE_NAME + " add column " + Sleep.SYNC + " INTEGER");
+            db.execSQL("UPDATE " + Sleep.TABLE_NAME + " SET SYNC = 0");
+        }
     }
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
