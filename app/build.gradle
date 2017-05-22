@@ -8,8 +8,8 @@ android {
         applicationId "eus.elkarmedia.apnea"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 11
-        versionName "1.4.3"
+        versionCode 14
+        versionName "1.4.6"
     }
     buildTypes {
         release {

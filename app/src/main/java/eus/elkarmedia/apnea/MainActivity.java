@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static int MAX_VOLUME_STREAK_IN_SECONDS;
     private static int PAUSE;
     private static boolean ALARM_STOMACH;
+    private static String ORIENTATION;
     private static boolean ORIENTATION_LEFT;
 
     @Override
@@ -232,6 +233,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         int lastPosition = getLastPosition();
         int currentPosition = getPosition(event.values[0], event.values[1], event.values[2]);
+        String text = "";
+        switch(currentPosition) {
+            case LEFT:
+                text = "LEFT";
+                break;
+            case RIGHT:
+                text = "RIGHT";
+                break;
+            case UP:
+                text = "UP";
+                break;
+            case BACK:
+                text = "BACK";
+                break;
+            case STOMACH:
+                text = "STOMACH";
+                break;
+            default:
+        }
+        Log.d("Position",text);
         boolean hasChangedPosition = lastPosition != currentPosition;
         long now = SystemClock.elapsedRealtime();
         long lapsed = (now - lastUpdate);
@@ -291,12 +312,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void vibrate() {
+        /*
         if (!isVibrating) {
             long[] pattern = {0, 1000, 200}; //0 to start now, 1000 to vibrate 1000 ms, 200 to sleep for 200 ms.
             vibrator.vibrate(pattern, 0); // 0 to repeat endlessly.
             isVibrating = true;
             totalVibrate++;
         }
+        */
     }
 
     private void saveSleepOnCloud() {
@@ -328,6 +351,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sound() {
+        /*
         if (!player.isPlaying()) {
             player.setLooping(true);
             player.start();
@@ -340,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             } else {
                 volumeStreak++;
             }
-        }
+        }*/
     }
 
     private void stopSounds() {
@@ -373,12 +397,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private int getPosition(double x, double y, double z) {
-        if (!ORIENTATION_LEFT) {
+        Log.d("Orientation","X: " + x + ", Y: " + y + ", Z: " + z);
+        if (ORIENTATION.equals("Right")) {
             y = -y;
+        }
+        if (ORIENTATION.equals("Up")) {
+            double lag = x;
+            x = y;
+            y = lag;
+        }
+        if (ORIENTATION.equals("Down")) {
+            double lag = x;
+            x = y;
+            y = -lag;
         }
         double absX = Math.abs(x);
         double absY = Math.abs(y);
         double absZ = Math.abs(z);
+
         if (absX >= absY && absX >= absZ) {
             //gotten up
             return UP;
@@ -432,6 +468,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         PAUSE = Integer.valueOf(prefs.getString("pause_in_minutes","10")) * 60;
         ALARM_STOMACH = prefs.getBoolean("alarm_stomach_bool",false);
         ORIENTATION_LEFT = prefs.getString("device_orientation","Left").equals("Left");
+        ORIENTATION = prefs.getString("device_orientation","Left");
         if (status != PAUSED) {
             pauseLeft = PAUSE;
         }

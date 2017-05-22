@@ -51,10 +51,14 @@
     <string-array name="pref_device_orientation_list_titles">
         <item>Left</item>
         <item>Right</item>
+        <item>Up</item>
+        <item>Down</item>
     </string-array>
     <string-array name="pref_device_orientation_list_values">
         <item>Left</item>
         <item>Right</item>
+        <item>Up</item>
+        <item>Down</item>
     </string-array>
 
     <string name="pref_title_volume_raise">Raise volume each X seconds</string>
