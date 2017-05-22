@@ -50,8 +50,14 @@ public class SleepDbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion == 1) {
-            db.execSQL("ALTER TABLE " + Sleep.TABLE_NAME + " add column " + Sleep.SYNC + " INTEGER");
-            db.execSQL("UPDATE " + Sleep.TABLE_NAME + " SET SYNC = 0");
+            try {
+                db.execSQL("ALTER TABLE " + Sleep.TABLE_NAME + " add column " + Sleep.SYNC + " INTEGER");
+                db.execSQL("UPDATE " + Sleep.TABLE_NAME + " SET SYNC = 0");
+            } catch (Exception e) {
+                db.execSQL(SQL_DELETE_ENTRIES);
+                this.onCreate(db);
+            }
+
         }
     }
 
