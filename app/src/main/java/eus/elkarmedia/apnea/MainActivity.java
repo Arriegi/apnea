@@ -470,6 +470,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.unregisterListener(this);
         dbHelper.close();
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+        if (lock.isHeld()) {
+            lock.release();
+        }
     }
 
     class UpdatePauseTime extends TimerTask {
