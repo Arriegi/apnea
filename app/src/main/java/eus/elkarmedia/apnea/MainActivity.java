@@ -312,14 +312,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void vibrate() {
-        /*
         if (!isVibrating) {
             long[] pattern = {0, 1000, 200}; //0 to start now, 1000 to vibrate 1000 ms, 200 to sleep for 200 ms.
             vibrator.vibrate(pattern, 0); // 0 to repeat endlessly.
             isVibrating = true;
             totalVibrate++;
         }
-        */
     }
 
     private void saveSleepOnCloud() {
@@ -351,7 +349,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sound() {
-        /*
         if (!player.isPlaying()) {
             player.setLooping(true);
             player.start();
@@ -364,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             } else {
                 volumeStreak++;
             }
-        }*/
+        }
     }
 
     private void stopSounds() {
