@@ -25,13 +25,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private final static int STOPPED = 3;
 
     private SensorManager sensorManager;
+    private PowerManager.WakeLock lock;
 
     private SleepDbHelper dbHelper;
 
@@ -77,7 +71,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static int PAUSE;
     private static boolean ALARM_STOMACH;
     private static String ORIENTATION;
-    private static boolean ORIENTATION_LEFT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,8 +83,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         dbHelper = new SleepDbHelper(this);
 
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SensorRead");
-        lock.acquire();
+        lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SensorRead");
 
         //Instantiate textViews
         statusTextView = (TextView) findViewById(R.id.statusTextView);
@@ -197,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
+                lock.release();
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 newSleep.storeOnDB(db);
                 saveSleepOnCloud();
@@ -216,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startListeningSensor() {
         status = STARTED;
+        lock.acquire();
         if (Build.VERSION.SDK_INT >= 19) {
             sensorManager.registerListener(this,
                     sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -252,7 +246,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
             default:
         }
-        Log.d("Position",text);
         boolean hasChangedPosition = lastPosition != currentPosition;
         long now = SystemClock.elapsedRealtime();
         long lapsed = (now - lastUpdate);
@@ -323,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void saveSleepOnCloud() {
         // Instantiate the RequestQueue.
         //TODO gorde zerbitzarian
-        RequestQueue queue = Volley.newRequestQueue(this);
+       /* RequestQueue queue = Volley.newRequestQueue(this);
         String url ="http://172.26.0.41/";
 
         // Request a string response from the provided URL.
@@ -340,7 +333,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
         // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        queue.add(stringRequest);*/
     }
 
     private void stopVibrating() {
@@ -394,7 +387,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private int getPosition(double x, double y, double z) {
-        Log.d("Orientation","X: " + x + ", Y: " + y + ", Z: " + z);
         if (ORIENTATION.equals("Right")) {
             y = -y;
         }
@@ -464,7 +456,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         MAX_VOLUME_STREAK_IN_SECONDS = Integer.valueOf(prefs.getString("volume_raise","4"));
         PAUSE = Integer.valueOf(prefs.getString("pause_in_minutes","10")) * 60;
         ALARM_STOMACH = prefs.getBoolean("alarm_stomach_bool",false);
-        ORIENTATION_LEFT = prefs.getString("device_orientation","Left").equals("Left");
         ORIENTATION = prefs.getString("device_orientation","Left");
         if (status != PAUSED) {
             pauseLeft = PAUSE;
