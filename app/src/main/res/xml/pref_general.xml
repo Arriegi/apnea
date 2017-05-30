@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="alarm_stomach_bool"
         android:summary="@string/pref_description_alarm_stomach"
         android:title="@string/pref_title_alarm_stomach" />

@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
                 sensorManager.unregisterListener(this);
-                lock.release();
+                if (lock.isHeld()) lock.release();
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 newSleep.storeOnDB(db);
                 saveSleepOnCloud();
@@ -227,25 +227,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         int lastPosition = getLastPosition();
         int currentPosition = getPosition(event.values[0], event.values[1], event.values[2]);
-        String text = "";
-        switch(currentPosition) {
-            case LEFT:
-                text = "LEFT";
-                break;
-            case RIGHT:
-                text = "RIGHT";
-                break;
-            case UP:
-                text = "UP";
-                break;
-            case BACK:
-                text = "BACK";
-                break;
-            case STOMACH:
-                text = "STOMACH";
-                break;
-            default:
-        }
         boolean hasChangedPosition = lastPosition != currentPosition;
         long now = SystemClock.elapsedRealtime();
         long lapsed = (now - lastUpdate);
@@ -504,18 +485,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             });
         }
-    }
-
-    private long get(String key) {
-        SharedPreferences prefs = getSharedPreferences(getString(R.string.app_name),MODE_PRIVATE);
-        return prefs.getLong(key,0);
-    }
-
-    private void set(String key, long value) {
-        SharedPreferences prefs = getSharedPreferences(getString(R.string.app_name),MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong(getString(R.string.app_name),value);
-        editor.commit();
     }
 
     public void setUp(long up) {
