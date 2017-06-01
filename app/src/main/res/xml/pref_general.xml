@@ -16,7 +16,7 @@
         android:title="@string/pref_title_pause_in_minutes" />
 
     <ListPreference
-        android:defaultValue="12"
+        android:defaultValue="0"
         android:entries="@array/pref_minutes_to_start_list_titles"
         android:entryValues="@array/pref_minutes_to_start_list_values"
         android:key="minutes_to_start"
