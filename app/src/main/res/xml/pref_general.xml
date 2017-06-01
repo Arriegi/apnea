@@ -16,6 +16,15 @@
         android:title="@string/pref_title_pause_in_minutes" />
 
     <ListPreference
+        android:defaultValue="12"
+        android:entries="@array/pref_minutes_to_start_list_titles"
+        android:entryValues="@array/pref_minutes_to_start_list_values"
+        android:key="minutes_to_start"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_minutes_to_start" />
+
+    <ListPreference
         android:defaultValue="Left"
         android:entries="@array/pref_device_orientation_list_titles"
         android:entryValues="@array/pref_device_orientation_list_values"

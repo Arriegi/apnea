@@ -186,6 +186,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("pause_in_minutes"));
             bindPreferenceSummaryToValue(findPreference("device_orientation"));
             bindPreferenceSummaryToValue(findPreference("volume_raise"));
+            bindPreferenceSummaryToValue(findPreference("minutes_to_start"));
             bindPreferenceSummaryToValue(findPreference("alarm_stomach_bool"));
             bindPreferenceSummaryToValue(findPreference("seconds_to_vibrate"));
             bindPreferenceSummaryToValue(findPreference("seconds_to_sound"));

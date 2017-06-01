@@ -14,6 +14,7 @@ import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private MediaPlayer player;
 
     private boolean isVibrating = false;
+    private boolean hasToNotice = false;
 
     private static int TIME_TO_VIBRATE_IN_SECONDS;
     private static int TIME_TO_SOUND_IN_SECONDS;
@@ -71,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static int PAUSE;
     private static boolean ALARM_STOMACH;
     private static String ORIENTATION;
+    private static int TIME_TO_START_NOTICING;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,12 +162,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int id = item.getItemId();
         switch (id) {
             case R.id.action_play:
+                hasToNotice = false;
                 stopPause();
                 if (status == STOPPED) {
                     initializeSleep();
                     showTimes();
                 }
                 startListeningSensor();
+                statusTextView.setText(R.string.sleeping);
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        hasToNotice = true;
+                        statusTextView.setText(R.string.started);
+                    }
+                }, TIME_TO_START_NOTICING);
                 return true;
             case R.id.action_pause:
                 if (status == PAUSED) {
@@ -193,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 newSleep.storeOnDB(db);
                 saveSleepOnCloud();
+                hasToNotice =  false;
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -286,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void vibrate() {
+        if (!hasToNotice) return;
         if (!isVibrating) {
             long[] pattern = {0, 1000, 200}; //0 to start now, 1000 to vibrate 1000 ms, 200 to sleep for 200 ms.
             vibrator.vibrate(pattern, 0); // 0 to repeat endlessly.
@@ -323,6 +338,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sound() {
+        if (!hasToNotice) return;
         if (player == null) {
             player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
         }
@@ -443,6 +459,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         MAX_VOLUME_STREAK_IN_SECONDS = Integer.valueOf(prefs.getString("volume_raise","4"));
         PAUSE = Integer.valueOf(prefs.getString("pause_in_minutes","10")) * 60;
         ALARM_STOMACH = prefs.getBoolean("alarm_stomach_bool",false);
+        TIME_TO_START_NOTICING = Integer.valueOf(prefs.getString("minutes_to_start","0")) * 60 * 1000;
         ORIENTATION = prefs.getString("device_orientation","Left");
         if (status != PAUSED) {
             pauseLeft = PAUSE;
@@ -492,10 +509,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             });
         }
     }
-
-    public void setUp(long up) {
-        this.up = up;
-    }
-
-
 }

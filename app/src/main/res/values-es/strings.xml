@@ -12,6 +12,7 @@
     <string name="left_side">Izquierda</string>
     <string name="legend">Cantidad / hh:mm:ss (% total de tiempo)</string>
     <string name="paused">Pausado</string>
+    <string name="sleeping">Durmiendose</string>
     <string name="paused_for">Pausado hasta %1$s</string>
     <string name="pref_default_display_name">John Smith</string>
     <string name="pref_description_alarm_stomach">Avisa si estás durmiendo boca abajo</string>
@@ -65,6 +66,17 @@
         <item>Right</item>
         <item>Up</item>
         <item>Down</item>
+    </string-array>
+
+    <string name="pref_minutes_to_start">Empezar a avisar después de X</string>
+    <string-array name="pref_minutes_to_start_list_titles">
+        <item>0 segundos</item>
+        <item>10 minutos</item>
+        <item>30 minutos</item>
+        <item>45 minutos</item>
+        <item>60 minutos</item>
+        <item>90 minutos</item>
+        <item>120 minutos</item>
     </string-array>
 
     <string-array name="pref_volume_raise_list_titles">

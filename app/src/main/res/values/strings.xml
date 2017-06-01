@@ -8,6 +8,7 @@
     <string name="action_stop">Stop</string>
     <string name="started">Started</string>
     <string name="paused">Paused</string>
+    <string name="sleeping">Getting Asleep</string>
     <string name="paused_for">Paused for %1$s</string>
     <string name="stopped">Stopped</string>
     <string name="legend">Counts / hh:mm:ss (% of total time)</string>
@@ -87,6 +88,26 @@
         <item>6</item>
         <item>15</item>
         <item>25</item>
+    </string-array>/
+
+    <string name="pref_minutes_to_start">Start noticing after X</string>
+    <string-array name="pref_minutes_to_start_list_titles">
+        <item>0 segundos</item>
+        <item>10 minutes</item>
+        <item>30 minutes</item>
+        <item>45 minutes</item>
+        <item>60 minutes</item>
+        <item>90 minutes</item>
+        <item>120 minutes</item>
+    </string-array>
+    <string-array name="pref_minutes_to_start_list_values">
+        <item>0</item>
+        <item>10</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
     </string-array>
 
     <string name="pref_title_seconds_to_sound">Start sound after X seconds</string>
