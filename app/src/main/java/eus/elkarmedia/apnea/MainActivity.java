@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startListeningSensor() {
         status = STARTED;
-        lock.acquire();
+        if (!lock.isHeld()) lock.acquire();
         if (Build.VERSION.SDK_INT >= 19) {
             sensorManager.registerListener(this,
                     sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -323,6 +323,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sound() {
+        if (player == null) {
+            player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+        }
         if (!player.isPlaying()) {
             player.setLooping(true);
             player.start();
@@ -339,6 +342,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void stopSounds() {
+        if (player == null) {
+            player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+        }
         if (player.isPlaying()) {
             player.pause();
         }
