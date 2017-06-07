@@ -12,6 +12,7 @@ import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -103,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         vibrator = (Vibrator) getSystemService(MainActivity.VIBRATOR_SERVICE);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+        player = getMediaPlayer();
         initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
     }
@@ -337,10 +338,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         isVibrating=false;
     }
 
+    private MediaPlayer getMediaPlayer() {
+        Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        if (alert == null) {
+            alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            if (alert == null) {
+                alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+            }
+        }
+        if (alert != null) {
+            return MediaPlayer.create(getApplicationContext(), alert);
+        } else {
+            return MediaPlayer.create(getApplicationContext(),R.raw.android_notification);
+        }
+    }
+
     private void sound() {
         if (!hasToNotice) return;
         if (player == null) {
-            player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+            player = getMediaPlayer();
         }
         if (!player.isPlaying()) {
             player.setLooping(true);
@@ -359,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void stopSounds() {
         if (player == null) {
-            player = MediaPlayer.create(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+            player = getMediaPlayer();
         }
         if (player.isPlaying()) {
             player.pause();
