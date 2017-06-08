@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (player == null) {
             player = getMediaPlayer();
         }
-        if (!player.isPlaying()) {
+        if (player != null && !player.isPlaying()) {
             player.setLooping(true);
             player.start();
             totalSound++;
@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (player == null) {
             player = getMediaPlayer();
         }
-        if (player.isPlaying()) {
+        if (player != null && player.isPlaying()) {
             player.pause();
         }
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
