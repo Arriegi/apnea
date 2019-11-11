@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,8 +21,8 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         dbHelper = new SleepDbHelper(this);
 
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SensorRead");
+        lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "apnea:wakelock");
 
         //Instantiate textViews
         statusTextView = (TextView) findViewById(R.id.statusTextView);
@@ -163,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int id = item.getItemId();
         switch (id) {
             case R.id.action_play:
+                startFlightMode();
                 hasToNotice = false;
                 stopPause();
                 if (status == STOPPED) {
@@ -190,10 +192,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stopVibrating();
                 status = PAUSED;
                 statusTextView.setText(R.string.paused);
+                Log.d("JON","stop listening sensor");
                 sensorManager.unregisterListener(this);
                 startPause();
                 return true;
             case R.id.action_stop:
+                stopFlightMode();
                 stopSounds();
                 stopVibrating();
                 stopPause();
@@ -202,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         (leftCount+rightCount+stomachCount+upCount+backCount),0 );
                 status = STOPPED;
                 statusTextView.setText(R.string.stopped);
+                Log.d("JON","stop listening sensor");
                 sensorManager.unregisterListener(this);
                 if (lock.isHeld()) lock.release();
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -222,9 +227,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    private void startFlightMode() {
+        try {
+            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            wifiManager.setWifiEnabled(false);
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopFlightMode() {
+        try {
+
+        } catch(Exception e) {
+
+        }
+    }
+
     private void startListeningSensor() {
+        Log.d("JON","start listening sensor");
         status = STARTED;
-        if (!lock.isHeld()) lock.acquire();
+        if (!lock.isHeld()) lock.acquire(99999999L);
         if (Build.VERSION.SDK_INT >= 19) {
             sensorManager.registerListener(this,
                     sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -240,12 +264,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        Log.d("JON","sensor event changed");
         int lastPosition = getLastPosition();
         int currentPosition = getPosition(event.values[0], event.values[1], event.values[2]);
         boolean hasChangedPosition = lastPosition != currentPosition;
         long now = SystemClock.elapsedRealtime();
         long lapsed = (now - lastUpdate);
         if (lapsed > 1000) {
+            Log.d("JON","time lapsed +1s");
             showTimes();
             total += lapsed;
             switch (currentPosition) {
@@ -355,32 +381,41 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void sound() {
         if (!hasToNotice) return;
-        if (player == null) {
-            player = getMediaPlayer();
-        }
-        if (player != null && !player.isPlaying()) {
-            player.setLooping(true);
-            player.start();
-            totalSound++;
-        } else {
-            //Raise volume if has past 4 seconds since last raising
-            if (volumeStreak == MAX_VOLUME_STREAK_IN_SECONDS) {
-                volumeStreak = 0;
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,AudioManager.ADJUST_RAISE,0);
-            } else {
-                volumeStreak++;
+        try {
+            if (player == null) {
+                player = getMediaPlayer();
             }
+            if (player != null && !player.isPlaying()) {
+                player.setLooping(true);
+                player.start();
+                totalSound++;
+            } else {
+                //Raise volume if has past 4 seconds since last raising
+                if (volumeStreak == MAX_VOLUME_STREAK_IN_SECONDS) {
+                    volumeStreak = 0;
+                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,AudioManager.ADJUST_RAISE,0);
+                } else {
+                    volumeStreak++;
+                }
+            }
+        } catch(NullPointerException e) {
+            e.printStackTrace();
         }
+
     }
 
     private void stopSounds() {
-        if (player == null) {
-            player = getMediaPlayer();
+        try {
+            if (player == null) {
+                player = getMediaPlayer();
+            }
+            if (player != null && player.isPlaying()) {
+                player.pause();
+            }
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
+        } catch(NullPointerException e) {
+            e.printStackTrace();
         }
-        if (player != null && player.isPlaying()) {
-            player.pause();
-        }
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
     }
 
     private void startPause() {
@@ -487,6 +522,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onDestroy();
         stopSounds();
         stopVibrating();
+        Log.d("JON","stop listening sensor");
         sensorManager.unregisterListener(this);
         dbHelper.close();
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);

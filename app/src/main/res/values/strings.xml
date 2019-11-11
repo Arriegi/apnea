@@ -11,7 +11,7 @@
     <string name="sleeping">Getting Asleep</string>
     <string name="paused_for">Paused for %1$s</string>
     <string name="stopped">Stopped</string>
-    <string name="legend">Counts / hh:mm:ss (% of total time)</string>
+    <string name="legend">Quantity / hh:mm:ss (% of total time)</string>
     <string name="left_side">Left side</string>
     <string name="right_side">Right side</string>
     <string name="back">Back</string>
