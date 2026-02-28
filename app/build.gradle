@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdk  34
+    namespace 'eus.elkarmedia.apnea'
+    compileSdk  35
 
     defaultConfig {
         applicationId "eus.elkarmedia.apnea"
-        minSdkVersion 14
-        targetSdkVersion 34
+        minSdkVersion 24
+        targetSdkVersion 35
         versionCode 28
         versionName "1.4.18"
     }
@@ -16,15 +17,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    namespace 'eus.elkarmedia.apnea'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.12'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.github.PhilJay:MPAndroidChart:v3.0.1'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'com.android.volley:volley:1.2.1'
 }

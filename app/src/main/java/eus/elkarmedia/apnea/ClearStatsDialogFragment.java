@@ -1,8 +1,8 @@
 package eus.elkarmedia.apnea;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DialogFragment;
+import androidx.fragment.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 

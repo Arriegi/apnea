@@ -123,8 +123,8 @@ public class StatsActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_clear_stats:
-                FragmentManager fm = getFragmentManager();
-                ClearStatsDialogFragment dialogFragment = new ClearStatsDialogFragment ();
+                androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
+                ClearStatsDialogFragment dialogFragment = new ClearStatsDialogFragment();
                 dialogFragment.show(fm, "Sample Fragment");
                 return true;
             default:

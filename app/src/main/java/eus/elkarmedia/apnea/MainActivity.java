@@ -34,11 +34,6 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    private final static int LEFT = 0;
-    private final static int RIGHT = 1;
-    private final static int BACK = 2;
-    private final static int STOMACH = 3;
-    private final static int UP = 4;
 
     private final static int STARTED = 1;
     private final static int PAUSED = 2;
@@ -54,20 +49,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private long left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0;
     private double lastUpdateX = 0, lastUpdateY = 0, lastUpdateZ = 0;
     private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, upCount = 0,
-            totalCount = 0, totalVibrate = 0, totalSound = 0, streak = 0, pauseLeft = 0;
+            totalCount = 0, streak = 0, pauseLeft = 0;
 
     private int status = STOPPED;
-    private int initialVolume, volumeStreak = 0;
     private String countTimePct = "%1$d / %2$s  (%3$.2f %%)";
     private long lastUpdate = 0;
     private Timer pauseTimer = new Timer();
 
-    private Vibrator vibrator;
-    private AudioManager audioManager;
-    private MediaPlayer player;
-
-    private boolean isVibrating = false;
-    private boolean hasToNotice = false;
+    private AlarmsManager alarmsManager;
 
     private static int TIME_TO_VIBRATE_IN_SECONDS;
     private static int TIME_TO_SOUND_IN_SECONDS;
@@ -84,6 +73,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         lastUpdate = SystemClock.elapsedRealtime();
+
+        checkPermissions();
 
         dbHelper = new SleepDbHelper(this);
 
@@ -103,11 +94,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         showTimes();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        vibrator = (Vibrator) getSystemService(MainActivity.VIBRATOR_SERVICE);
-        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        player = getMediaPlayer();
-        initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
+        alarmsManager = new AlarmsManager(this);
     }
 
     @Override
@@ -115,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         updateVarsFromPreferences();
+        alarmsManager.setMaxVolumeStreakInSeconds(MAX_VOLUME_STREAK_IN_SECONDS);
     }
 
     private void showTimes() {
@@ -138,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         totalsTextView.setText(totalsString);
 
         Resources res = getResources();
-        String text = String.format(res.getString(R.string.totalAlarms), totalVibrate, totalSound);
+        String text = String.format(res.getString(R.string.totalAlarms), alarmsManager.getTotalVibrate(), alarmsManager.getTotalSound());
         totalAlarmsTextView.setText(text);
     }
 
@@ -165,19 +153,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch (id) {
             case R.id.action_play:
                 startFlightMode();
-                hasToNotice = false;
+                alarmsManager.setHasToNotice(false);
                 stopPause();
                 if (status == STOPPED) {
                     initializeSleep();
                     showTimes();
                 }
                 startListeningSensor();
+                startSleepTrackingService();
                 statusTextView.setText(R.string.sleeping);
                 final Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        hasToNotice = true;
+                        alarmsManager.setHasToNotice(true);
                         statusTextView.setText(R.string.started);
                     }
                 }, TIME_TO_START_NOTICING);
@@ -188,18 +177,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     startPause();
                     return true;
                 }
-                stopSounds();
-                stopVibrating();
+                alarmsManager.stopSounds();
+                alarmsManager.stopVibrating();
                 status = PAUSED;
                 statusTextView.setText(R.string.paused);
                 Log.d("JON","stop listening sensor");
                 sensorManager.unregisterListener(this);
+                stopSleepTrackingService();
                 startPause();
                 return true;
             case R.id.action_stop:
                 stopFlightMode();
-                stopSounds();
-                stopVibrating();
+                alarmsManager.stopSounds();
+                alarmsManager.stopVibrating();
                 stopPause();
                 Sleep newSleep = new Sleep(0,left, leftCount, right, rightCount, back, backCount,
                         stomach, stomachCount, up, upCount, (left+right+back+stomach+up),
@@ -208,11 +198,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 statusTextView.setText(R.string.stopped);
                 Log.d("JON","stop listening sensor");
                 sensorManager.unregisterListener(this);
+                stopSleepTrackingService();
                 if (lock.isHeld()) lock.release();
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 newSleep.storeOnDB(db);
                 saveSleepOnCloud();
-                hasToNotice =  false;
+                alarmsManager.setHasToNotice(false);
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -229,9 +220,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startFlightMode() {
         try {
-            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            wifiManager.setWifiEnabled(false);
-
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Intent panelIntent = new Intent(android.provider.Settings.Panel.ACTION_WIFI);
+                startActivity(panelIntent);
+            } else {
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                wifiManager.setWifiEnabled(false);
+            }
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -266,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         Log.d("JON","sensor event changed");
         int lastPosition = getLastPosition();
-        int currentPosition = getPosition(event.values[0], event.values[1], event.values[2]);
+        int currentPosition = PostureCalculator.getPosition(event.values[0], event.values[1], event.values[2], ORIENTATION);
         boolean hasChangedPosition = lastPosition != currentPosition;
         long now = SystemClock.elapsedRealtime();
         long lapsed = (now - lastUpdate);
@@ -275,29 +270,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             showTimes();
             total += lapsed;
             switch (currentPosition) {
-                case RIGHT:
-                    stopSounds();
-                    stopVibrating();
+                case PostureCalculator.RIGHT:
+                    alarmsManager.stopSounds();
+                    alarmsManager.stopVibrating();
                     if (hasChangedPosition) rightCount++;
                     right += lapsed;
                     break;
-                case LEFT:
-                    stopSounds();
-                    stopVibrating();
+                case PostureCalculator.LEFT:
+                    alarmsManager.stopSounds();
+                    alarmsManager.stopVibrating();
                     if (hasChangedPosition) leftCount++;
                     left += lapsed;
                     break;
-                case BACK:
+                case PostureCalculator.BACK:
                     if (hasChangedPosition) backCount++;
                     back += lapsed;
                     break;
-                case STOMACH:
+                case PostureCalculator.STOMACH:
                     if (hasChangedPosition) stomachCount++;
                     stomach += lapsed;
                     break;
-                case UP:
-                    stopSounds();
-                    stopVibrating();
+                case PostureCalculator.UP:
+                    alarmsManager.stopSounds();
+                    alarmsManager.stopVibrating();
                     if (hasChangedPosition) upCount++;
                     up += lapsed;
                     break;
@@ -311,12 +306,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 streak++;
             }
             if (streak > TIME_TO_VIBRATE_IN_SECONDS + 1 && streak < TIME_TO_SOUND_IN_SECONDS &&
-                    (currentPosition == BACK || (ALARM_STOMACH && currentPosition == STOMACH))) {
-                vibrate();
+                    (currentPosition == PostureCalculator.BACK || (ALARM_STOMACH && currentPosition == PostureCalculator.STOMACH))) {
+                alarmsManager.vibrate();
             }
             if (streak > TIME_TO_SOUND_IN_SECONDS &&
-                    (currentPosition == BACK || (ALARM_STOMACH && currentPosition == STOMACH))) {
-                sound();
+                    (currentPosition == PostureCalculator.BACK || (ALARM_STOMACH && currentPosition == PostureCalculator.STOMACH))) {
+                alarmsManager.sound();
             }
             //Update last... for next second
             lastUpdate = now;
@@ -326,97 +321,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    private void vibrate() {
-        if (!hasToNotice) return;
-        if (!isVibrating) {
-            long[] pattern = {0, 1000, 200}; //0 to start now, 1000 to vibrate 1000 ms, 200 to sleep for 200 ms.
-            vibrator.vibrate(pattern, 0); // 0 to repeat endlessly.
-            isVibrating = true;
-            totalVibrate++;
-        }
-    }
 
-    private void saveSleepOnCloud() {
-        // Instantiate the RequestQueue.
-        //TODO gorde zerbitzarian
-       /* RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://172.26.0.41/";
-
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("APNEA",response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.getMessage();
-            }
-        });
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);*/
-    }
-
-    private void stopVibrating() {
-        vibrator.cancel();
-        isVibrating=false;
-    }
-
-    private MediaPlayer getMediaPlayer() {
-        Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        if (alert == null) {
-            alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            if (alert == null) {
-                alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            }
-        }
-        if (alert != null) {
-            return MediaPlayer.create(getApplicationContext(), alert);
-        } else {
-            return MediaPlayer.create(getApplicationContext(),R.raw.android_notification);
-        }
-    }
-
-    private void sound() {
-        if (!hasToNotice) return;
-        try {
-            if (player == null) {
-                player = getMediaPlayer();
-            }
-            if (player != null && !player.isPlaying()) {
-                player.setLooping(true);
-                player.start();
-                totalSound++;
-            } else {
-                //Raise volume if has past 4 seconds since last raising
-                if (volumeStreak == MAX_VOLUME_STREAK_IN_SECONDS) {
-                    volumeStreak = 0;
-                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,AudioManager.ADJUST_RAISE,0);
-                } else {
-                    volumeStreak++;
-                }
-            }
-        } catch(NullPointerException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void stopSounds() {
-        try {
-            if (player == null) {
-                player = getMediaPlayer();
-            }
-            if (player != null && player.isPlaying()) {
-                player.pause();
-            }
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,1,0);
-        } catch(NullPointerException e) {
-            e.printStackTrace();
-        }
-    }
 
     private void startPause() {
         pauseTimer = new Timer();
@@ -437,48 +342,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (lastUpdateX == 0 && lastUpdateY == 0 && lastUpdateZ == 0) {
             return -1;
         }
-        return getPosition(lastUpdateX,lastUpdateY,lastUpdateZ);
+        return PostureCalculator.getPosition(lastUpdateX,lastUpdateY,lastUpdateZ, ORIENTATION);
     }
 
-    private int getPosition(double x, double y, double z) {
-        if (ORIENTATION.equals("Right")) {
-            y = -y;
-        }
-        if (ORIENTATION.equals("Up")) {
-            double lag = x;
-            x = y;
-            y = lag;
-        }
-        if (ORIENTATION.equals("Down")) {
-            double lag = x;
-            x = y;
-            y = -lag;
-        }
-        double absX = Math.abs(x);
-        double absY = Math.abs(y);
-        double absZ = Math.abs(z);
-
-        if (absX >= absY && absX >= absZ) {
-            //gotten up
-            return UP;
-        } else if (absY >= absX && absY >= absZ) {
-            //correct
-            if (y > 0) {
-                return RIGHT;
-            } else {
-                return LEFT;
-            }
-        } else if (absZ >= absX && absZ >= absY) {
-            //back or stomach
-            if (z > 0) {
-                return BACK;
-            } else {
-                return STOMACH;
-            }
-        } else {
-            return -1;
-        }
-    }
 
     private void initializeSleep() {
         total = 0;
@@ -498,8 +364,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         lastUpdateY = 0;
         lastUpdateZ = 0;
         status = STOPPED;
-        totalVibrate = 0;
-        totalSound = 0;
+        alarmsManager.resetCounters();
     }
 
     private void updateVarsFromPreferences() {
@@ -520,12 +385,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopSounds();
-        stopVibrating();
+        alarmsManager.stopSounds();
+        alarmsManager.stopVibrating();
+        stopSleepTrackingService();
         Log.d("JON","stop listening sensor");
         sensorManager.unregisterListener(this);
         dbHelper.close();
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+        alarmsManager.restoreInitialVolume();
         if (lock.isHeld()) {
             lock.release();
         }
@@ -550,6 +416,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 public void run() {
                     if (pauseLeft == 0) {
                         startListeningSensor();
+                        startSleepTrackingService();
                         stopPause();
                     } else {
                         int minutes = (pauseLeft % 3600) / 60;
@@ -559,6 +426,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
                 }
             });
+        }
+    }
+
+    private void startSleepTrackingService() {
+        Intent serviceIntent = new Intent(this, SleepTrackingService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+    }
+
+    private void stopSleepTrackingService() {
+        Intent serviceIntent = new Intent(this, SleepTrackingService.class);
+        stopService(serviceIntent);
+    }
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
         }
     }
 }
