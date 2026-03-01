@@ -9,28 +9,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -90,10 +85,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         totalsTextView = (TextView) findViewById(R.id.totalsTextView);
         totalAlarmsTextView = (TextView) findViewById(R.id.totalAlarmsTextView);
 
-        showTimes();
-
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         alarmsManager = new AlarmsManager(this);
+
+        showTimes();
     }
 
     @Override
@@ -144,72 +139,71 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_play:
-                startFlightMode();
-                alarmsManager.setHasToNotice(false);
+        if (id == R.id.action_play) {
+            startFlightMode();
+            alarmsManager.setHasToNotice(false);
+            stopPause();
+            if (status == STOPPED) {
+                initializeSleep();
+                showTimes();
+            }
+            startListeningSensor();
+            startSleepTrackingService();
+            statusTextView.setText(R.string.sleeping);
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    alarmsManager.setHasToNotice(true);
+                    statusTextView.setText(R.string.started);
+                }
+            }, TIME_TO_START_NOTICING);
+            return true;
+        } else if (id == R.id.action_pause) {
+            if (status == PAUSED) {
                 stopPause();
-                if (status == STOPPED) {
-                    initializeSleep();
-                    showTimes();
-                }
-                startListeningSensor();
-                startSleepTrackingService();
-                statusTextView.setText(R.string.sleeping);
-                final Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        alarmsManager.setHasToNotice(true);
-                        statusTextView.setText(R.string.started);
-                    }
-                }, TIME_TO_START_NOTICING);
-                return true;
-            case R.id.action_pause:
-                if (status == PAUSED) {
-                    stopPause();
-                    startPause();
-                    return true;
-                }
-                alarmsManager.stopSounds();
-                alarmsManager.stopVibrating();
-                status = PAUSED;
-                statusTextView.setText(R.string.paused);
-                Log.d("JON", "stop listening sensor");
-                sensorManager.unregisterListener(this);
-                stopSleepTrackingService();
                 startPause();
                 return true;
-            case R.id.action_stop:
-                stopFlightMode();
-                alarmsManager.stopSounds();
-                alarmsManager.stopVibrating();
-                stopPause();
-                Sleep newSleep = new Sleep(0, left, leftCount, right, rightCount, back, backCount,
-                        stomach, stomachCount, up, upCount, (left + right + back + stomach + up),
-                        (leftCount + rightCount + stomachCount + upCount + backCount), 0);
-                status = STOPPED;
-                statusTextView.setText(R.string.stopped);
-                Log.d("JON", "stop listening sensor");
-                sensorManager.unregisterListener(this);
-                stopSleepTrackingService();
-                if (lock.isHeld())
-                    lock.release();
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                newSleep.storeOnDB(db);
-                saveSleepOnCloud();
-                alarmsManager.setHasToNotice(false);
-                return true;
-            case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.action_stats:
-                intent = new Intent(this, StatsActivity.class);
-                startActivity(intent);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            }
+            alarmsManager.stopSounds();
+            alarmsManager.stopVibrating();
+            status = PAUSED;
+            statusTextView.setText(R.string.paused);
+            Log.d("JON", "stop listening sensor");
+            sensorManager.unregisterListener(this);
+            stopSleepTrackingService();
+            startPause();
+            return true;
+        } else if (id == R.id.action_stop) {
+            stopFlightMode();
+            alarmsManager.stopSounds();
+            alarmsManager.stopVibrating();
+            stopPause();
+            Sleep newSleep = new Sleep(0, left, leftCount, right, rightCount, back, backCount,
+                    stomach, stomachCount, up, upCount, (left + right + back + stomach + up),
+                    (leftCount + rightCount + stomachCount + upCount + backCount), 0);
+            status = STOPPED;
+            statusTextView.setText(R.string.stopped);
+            Log.d("JON", "stop listening sensor");
+            sensorManager.unregisterListener(this);
+            stopSleepTrackingService();
+            if (lock.isHeld())
+                lock.release();
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            newSleep.storeOnDB(db);
+            //saveSleepOnCloud();
+            alarmsManager.setHasToNotice(false);
+            return true;
+        } else if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_stats) {
+            Intent intent = new Intent(this, StatsActivity.class);
+            startActivity(intent);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
@@ -266,40 +260,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d("JON", "time lapsed +1s");
             showTimes();
             total += lapsed;
-            switch (currentPosition) {
-                case PostureCalculator.RIGHT:
-                    alarmsManager.stopSounds();
-                    alarmsManager.stopVibrating();
-                    if (hasChangedPosition)
-                        rightCount++;
-                    right += lapsed;
-                    break;
-                case PostureCalculator.LEFT:
-                    alarmsManager.stopSounds();
-                    alarmsManager.stopVibrating();
-                    if (hasChangedPosition)
-                        leftCount++;
-                    left += lapsed;
-                    break;
-                case PostureCalculator.BACK:
-                    if (hasChangedPosition)
-                        backCount++;
-                    back += lapsed;
-                    break;
-                case PostureCalculator.STOMACH:
-                    if (hasChangedPosition)
-                        stomachCount++;
-                    stomach += lapsed;
-                    break;
-                case PostureCalculator.UP:
-                    alarmsManager.stopSounds();
-                    alarmsManager.stopVibrating();
-                    if (hasChangedPosition)
-                        upCount++;
-                    up += lapsed;
-                    break;
-                default:
-                    Log.d("sensor", "unknown body position");
+            if (currentPosition == PostureCalculator.RIGHT) {
+                alarmsManager.stopSounds();
+                alarmsManager.stopVibrating();
+                if (hasChangedPosition)
+                    rightCount++;
+                right += lapsed;
+            } else if (currentPosition == PostureCalculator.LEFT) {
+                alarmsManager.stopSounds();
+                alarmsManager.stopVibrating();
+                if (hasChangedPosition)
+                    leftCount++;
+                left += lapsed;
+            } else if (currentPosition == PostureCalculator.BACK) {
+                if (hasChangedPosition)
+                    backCount++;
+                back += lapsed;
+            } else if (currentPosition == PostureCalculator.STOMACH) {
+                if (hasChangedPosition)
+                    stomachCount++;
+                stomach += lapsed;
+            } else if (currentPosition == PostureCalculator.UP) {
+                alarmsManager.stopSounds();
+                alarmsManager.stopVibrating();
+                if (hasChangedPosition)
+                    upCount++;
+                up += lapsed;
+            } else {
+                Log.d("sensor", "unknown body position");
             }
             if (hasChangedPosition) {
                 totalCount++;

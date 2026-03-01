@@ -121,14 +121,13 @@ public class StatsActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_clear_stats:
-                androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
-                ClearStatsDialogFragment dialogFragment = new ClearStatsDialogFragment();
-                dialogFragment.show(fm, "Sample Fragment");
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (id == R.id.action_clear_stats) {
+            androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
+            ClearStatsDialogFragment dialogFragment = new ClearStatsDialogFragment();
+            dialogFragment.show(fm, "Sample Fragment");
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
