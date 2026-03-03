@@ -106,6 +106,18 @@
             android:textSize="@dimen/title1_size" />
 
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sound_level"
+            android:textSize="@dimen/title2_size" />
+
+        <TextView
+            android:id="@+id/soundLevelTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/title1_size" />
+
+        <TextView
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:id="@+id/totalAlarmsTextView"
             android:layout_width="wrap_content"

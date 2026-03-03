@@ -1,27 +1,39 @@
 package eus.elkarmedia.apnea;
 
-import android.app.FragmentManager;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static eus.elkarmedia.apnea.R.string.back;
 
-public class StatsActivity extends AppCompatActivity {
+/**
+ * Displays historical sleep statistics across all sessions.
+ *
+ * The chart shows position percentages (left Y axis) and decibel levels (right
+ * Y axis).
+ * Tapping a specific session point opens SleepDetailActivity for intra-night
+ * analysis.
+ */
+public class StatsActivity extends AppCompatActivity implements OnChartValueSelectedListener {
 
     private SleepDbHelper dbHelper = null;
+    private final List<Long> sleepIds = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,49 +48,49 @@ public class StatsActivity extends AppCompatActivity {
         LineChart chart = (LineChart) findViewById(R.id.chart);
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getXAxis().setDrawGridLines(false);
-        chart.getAxisRight().setEnabled(false);
+        chart.getAxisRight().setEnabled(true);
+        chart.getAxisRight().setDrawGridLines(false);
         chart.getXAxis().setAxisMinimum(0);
         chart.getXAxis().setAxisMaximum(sleeps.size());
+        chart.setOnChartValueSelectedListener(this);
 
         List<Entry> entriesBack = new ArrayList<Entry>();
         List<Entry> entriesLeft = new ArrayList<Entry>();
         List<Entry> entriesRight = new ArrayList<Entry>();
         List<Entry> entriesStomach = new ArrayList<Entry>();
         List<Entry> entriesUp = new ArrayList<Entry>();
+        List<Entry> entriesAvgDb = new ArrayList<Entry>();
+        List<Entry> entriesMaxDb = new ArrayList<Entry>();
 
         for (int i = 0; i < sleeps.size(); i++) {
-            // turn your data into Entry objects
             Sleep sleep = sleeps.get(i);
             if (sleep.getTotal() == 0) {
                 dbHelper.deleteSleep(sleep);
                 continue;
             }
-            long back = sleep.getTotal() == 0 ? 0 : sleep.getBack() * 100 / sleep.getTotal();
-            entriesBack.add(new Entry(i, back));
-            long right = sleep.getTotal() == 0 ? 0 : sleep.getRight() * 100 / sleep.getTotal();
-            entriesRight.add(new Entry(i, right));
-            long left = sleep.getTotal() == 0 ? 0 : sleep.getLeft() * 100 / sleep.getTotal();
-            entriesLeft.add(new Entry(i, left));
-            long stomach = sleep.getTotal() == 0 ? 0 : sleep.getStomach() * 100 / sleep.getTotal();
-            entriesStomach.add(new Entry(i, stomach));
-            long up = sleep.getTotal() == 0 ? 0 : sleep.getUp() * 100 / sleep.getTotal();
-            entriesUp.add(new Entry(i, up));
+            sleepIds.add(sleep.getId());
+            int index = sleepIds.size() - 1;
+            long backPct = sleep.getBack() * 100 / sleep.getTotal();
+            entriesBack.add(new Entry(index, backPct));
+            long rightPct = sleep.getRight() * 100 / sleep.getTotal();
+            entriesRight.add(new Entry(index, rightPct));
+            long leftPct = sleep.getLeft() * 100 / sleep.getTotal();
+            entriesLeft.add(new Entry(index, leftPct));
+            long stomachPct = sleep.getStomach() * 100 / sleep.getTotal();
+            entriesStomach.add(new Entry(index, stomachPct));
+            long upPct = sleep.getUp() * 100 / sleep.getTotal();
+            entriesUp.add(new Entry(index, upPct));
+            entriesAvgDb.add(new Entry(index, (float) sleep.getAvgDecibels()));
+            entriesMaxDb.add(new Entry(index, (float) sleep.getMaxDecibels()));
         }
-        if (entriesBack.size() == 0) {
-            entriesBack.add(new Entry(0,0));
-        }
-        if (entriesRight.size() == 0) {
-            entriesRight.add(new Entry(0,0));
-        }
-        if (entriesLeft.size() == 0) {
-            entriesLeft.add(new Entry(0,0));
-        }
-        if (entriesStomach.size() == 0) {
-            entriesStomach.add(new Entry(0,0));
-        }
-        if (entriesUp.size() == 0) {
-            entriesUp.add(new Entry(0,0));
-        }
+        addEmptyEntryIfNeeded(entriesBack);
+        addEmptyEntryIfNeeded(entriesRight);
+        addEmptyEntryIfNeeded(entriesLeft);
+        addEmptyEntryIfNeeded(entriesStomach);
+        addEmptyEntryIfNeeded(entriesUp);
+        addEmptyEntryIfNeeded(entriesAvgDb);
+        addEmptyEntryIfNeeded(entriesMaxDb);
+
         List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
 
         LineDataSet setComp1 = new LineDataSet(entriesBack, getString(back));
@@ -96,30 +108,63 @@ public class StatsActivity extends AppCompatActivity {
         LineDataSet setComp5 = new LineDataSet(entriesUp, getString(R.string.getUp));
         setComp5.setAxisDependency(YAxis.AxisDependency.LEFT);
         setComp5.setColor(Color.MAGENTA);
+        LineDataSet setAvgDb = new LineDataSet(entriesAvgDb, getString(R.string.avg_decibels));
+        setAvgDb.setAxisDependency(YAxis.AxisDependency.RIGHT);
+        setAvgDb.setColor(Color.CYAN);
+        setAvgDb.setLineWidth(2f);
+        LineDataSet setMaxDb = new LineDataSet(entriesMaxDb, getString(R.string.max_decibels));
+        setMaxDb.setAxisDependency(YAxis.AxisDependency.RIGHT);
+        setMaxDb.setColor(Color.YELLOW);
+        setMaxDb.setLineWidth(2f);
 
         dataSets.add(setComp1);
         dataSets.add(setComp2);
         dataSets.add(setComp3);
         dataSets.add(setComp4);
         dataSets.add(setComp5);
+        dataSets.add(setAvgDb);
+        dataSets.add(setMaxDb);
 
         LineData data = new LineData(dataSets);
         chart.setData(data);
         chart.invalidate();
+
+        Toast.makeText(this, R.string.tap_to_detail, Toast.LENGTH_LONG).show();
+    }
+
+    private void addEmptyEntryIfNeeded(List<Entry> entries) {
+        if (entries.isEmpty()) {
+            entries.add(new Entry(0, 0));
+        }
+    }
+
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+        int index = (int) e.getX();
+        if (index >= 0 && index < sleepIds.size()) {
+            openSleepDetail(sleepIds.get(index));
+        }
+    }
+
+    @Override
+    public void onNothingSelected() {
+        // No action needed
+    }
+
+    private void openSleepDetail(long sleepId) {
+        Intent intent = new Intent(this, SleepDetailActivity.class);
+        intent.putExtra(SleepDetailActivity.EXTRA_SLEEP_ID, sleepId);
+        startActivity(intent);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_stats, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_clear_stats) {
             androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();

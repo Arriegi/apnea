@@ -1,15 +1,15 @@
 package eus.elkarmedia.apnea;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.wifi.WifiManager;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,10 +20,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.Manifest;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SleepDbHelper dbHelper;
 
     private TextView statusTextView, leftTextView, rightTextView, backTextView, stomachTextView,
-            getUpTextView, totalsTextView, totalAlarmsTextView;
+            getUpTextView, totalsTextView, totalAlarmsTextView, soundLevelTextView;
     private long left = 0, right = 0, back = 0, stomach = 0, up = 0, total = 0;
     private double lastUpdateX = 0, lastUpdateY = 0, lastUpdateZ = 0;
     private int leftCount = 0, rightCount = 0, backCount = 0, stomachCount = 0, upCount = 0,
@@ -51,6 +54,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Timer pauseTimer = new Timer();
 
     private AlarmsManager alarmsManager;
+    private SoundLevelMeter soundLevelMeter;
+
+    private double totalDecibels = 0;
+    private double maxDecibels = 0;
+    private long soundSampleCount = 0;
+    private final List<SleepSample> pendingSamples = new ArrayList<>();
+    private long sampleTimestamp = 0;
 
     private static int TIME_TO_VIBRATE_IN_SECONDS;
     private static int TIME_TO_SOUND_IN_SECONDS;
@@ -84,9 +94,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         getUpTextView = (TextView) findViewById(R.id.getUpTextView);
         totalsTextView = (TextView) findViewById(R.id.totalsTextView);
         totalAlarmsTextView = (TextView) findViewById(R.id.totalAlarmsTextView);
+        soundLevelTextView = (TextView) findViewById(R.id.soundLevelTextView);
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         alarmsManager = new AlarmsManager(this);
+        soundLevelMeter = new SoundLevelMeter();
 
         showTimes();
     }
@@ -123,6 +135,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         String text = String.format(res.getString(R.string.totalAlarms), alarmsManager.getTotalVibrate(),
                 alarmsManager.getTotalSound());
         totalAlarmsTextView.setText(text);
+
+        showSoundLevel();
+    }
+
+    private void showSoundLevel() {
+        if (soundLevelMeter.isRunning()) {
+            double currentDb = soundLevelMeter.getCurrentDecibelLevel();
+            String soundText = String.format(getString(R.string.current_db), currentDb);
+            soundLevelTextView.setText(soundText);
+        } else {
+            soundLevelTextView.setText(R.string.sound_level_off);
+        }
     }
 
     private String getHoursMinutesSeconds(double time) {
@@ -140,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_play) {
-            startFlightMode();
             alarmsManager.setHasToNotice(false);
             stopPause();
             if (status == STOPPED) {
@@ -148,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 showTimes();
             }
             startListeningSensor();
+            startSoundLevelMeter();
             startSleepTrackingService();
             statusTextView.setText(R.string.sleeping);
             final Handler handler = new Handler();
@@ -171,17 +195,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             statusTextView.setText(R.string.paused);
             Log.d("JON", "stop listening sensor");
             sensorManager.unregisterListener(this);
+            soundLevelMeter.stop();
             stopSleepTrackingService();
             startPause();
             return true;
         } else if (id == R.id.action_stop) {
-            stopFlightMode();
             alarmsManager.stopSounds();
             alarmsManager.stopVibrating();
             stopPause();
-            Sleep newSleep = new Sleep(0, left, leftCount, right, rightCount, back, backCount,
-                    stomach, stomachCount, up, upCount, (left + right + back + stomach + up),
-                    (leftCount + rightCount + stomachCount + upCount + backCount), 0);
+            Sleep newSleep = createSleepWithSoundData();
             status = STOPPED;
             statusTextView.setText(R.string.stopped);
             Log.d("JON", "stop listening sensor");
@@ -190,8 +212,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if (lock.isHeld())
                 lock.release();
             SQLiteDatabase db = dbHelper.getWritableDatabase();
-            newSleep.storeOnDB(db);
-            //saveSleepOnCloud();
+            long sleepId = newSleep.storeOnDB(db);
+            storePendingSamples(db, sleepId);
+            // saveSleepOnCloud();
             alarmsManager.setHasToNotice(false);
             return true;
         } else if (id == R.id.action_settings) {
@@ -204,28 +227,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return true;
         } else {
             return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private void startFlightMode() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Intent panelIntent = new Intent(android.provider.Settings.Panel.ACTION_WIFI);
-                startActivity(panelIntent);
-            } else {
-                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                wifiManager.setWifiEnabled(false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void stopFlightMode() {
-        try {
-
-        } catch (Exception e) {
-
         }
     }
 
@@ -310,7 +311,50 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             lastUpdateX = event.values[0];
             lastUpdateY = event.values[1];
             lastUpdateZ = event.values[2];
+
+            accumulateSoundSample(currentPosition);
         }
+    }
+
+    private void accumulateSoundSample(int currentPosition) {
+        double currentDb = 0;
+        if (soundLevelMeter.isRunning()) {
+            currentDb = soundLevelMeter.getCurrentDecibelLevel();
+            if (currentDb > 0) {
+                totalDecibels += currentDb;
+                soundSampleCount++;
+                if (currentDb > maxDecibels) {
+                    maxDecibels = currentDb;
+                }
+            }
+        }
+        sampleTimestamp++;
+        pendingSamples.add(new SleepSample(0, sampleTimestamp, currentPosition, currentDb));
+    }
+
+    private Sleep createSleepWithSoundData() {
+        double avgDecibels = soundSampleCount > 0 ? totalDecibels / soundSampleCount : 0;
+        long totalTime = left + right + back + stomach + up;
+        long totalChanges = leftCount + rightCount + stomachCount + upCount + backCount;
+        return new Sleep(0, left, leftCount, right, rightCount, back, backCount,
+                stomach, stomachCount, up, upCount, totalTime, totalChanges,
+                avgDecibels, maxDecibels, soundSampleCount, 0);
+    }
+
+    private void startSoundLevelMeter() {
+        if (hasMicrophonePermission()) {
+            soundLevelMeter.start(this);
+        } else {
+            Log.w("JON", "Microphone permission not granted, sound level meter not started");
+        }
+    }
+
+    private void storePendingSamples(SQLiteDatabase db, long sleepId) {
+        for (SleepSample sample : pendingSamples) {
+            sample.setSleepId(sleepId);
+            sample.storeOnDB(db);
+        }
+        pendingSamples.clear();
     }
 
     private void startPause() {
@@ -354,6 +398,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         lastUpdateZ = 0;
         status = STOPPED;
         alarmsManager.resetCounters();
+        initializeSoundData();
+    }
+
+    private void initializeSoundData() {
+        totalDecibels = 0;
+        maxDecibels = 0;
+        soundSampleCount = 0;
+        pendingSamples.clear();
+        sampleTimestamp = 0;
     }
 
     private void updateVarsFromPreferences() {
@@ -379,6 +432,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stopSleepTrackingService();
         Log.d("JON", "stop listening sensor");
         sensorManager.unregisterListener(this);
+        soundLevelMeter.stop();
         dbHelper.close();
         alarmsManager.restoreInitialVolume();
         if (lock.isHeld()) {
@@ -405,6 +459,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 public void run() {
                     if (pauseLeft == 0) {
                         startListeningSensor();
+                        startSoundLevelMeter();
                         startSleepTrackingService();
                         stopPause();
                     } else {
@@ -436,9 +491,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(
-                    android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[] { android.Manifest.permission.POST_NOTIFICATIONS }, 101);
+                    Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 101);
             }
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(
+                    Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, 102);
+            }
+        }
+    }
+
+    private boolean hasMicrophonePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return checkSelfPermission(
+                    Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
     }
 }

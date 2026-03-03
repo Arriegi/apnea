@@ -22,14 +22,19 @@ public class Sleep {
     public static final String UP_COUNT_TITLE = "upcount";
     public static final String TOTAL_TITLE = "total";
     public static final String TOTAL_COUNT_TITLE = "totalcount";
+    public static final String AVG_DECIBELS = "avg_decibels";
+    public static final String MAX_DECIBELS = "max_decibels";
+    public static final String SOUND_SAMPLE_COUNT = "sound_sample_count";
     public static final String SYNC = "synchronized";
 
     long id, left, leftCount, right, rightCount, back, backCount, stomach, stomachCount, up, upCount,
-            total, totalCount;
+            total, totalCount, soundSampleCount;
+    double avgDecibels, maxDecibels;
     int sync = 0;
 
     public Sleep(long id, long left, long leftCount, long right, long rightCount, long back, long backCount,
-                 long stomach, long stomachCount, long up, long upCount, long total, long totalCount, int sync) {
+            long stomach, long stomachCount, long up, long upCount, long total, long totalCount,
+            double avgDecibels, double maxDecibels, long soundSampleCount, int sync) {
         this.id = id;
         this.left = left;
         this.leftCount = leftCount;
@@ -43,12 +48,19 @@ public class Sleep {
         this.upCount = upCount;
         this.total = total;
         this.totalCount = totalCount;
+        this.avgDecibels = avgDecibels;
+        this.maxDecibels = maxDecibels;
+        this.soundSampleCount = soundSampleCount;
         this.sync = sync;
     }
 
-    public long getId() {return id;}
+    public long getId() {
+        return id;
+    }
 
-    public void setId(long id) { this.id = id;}
+    public void setId(long id) {
+        this.id = id;
+    }
 
     public long getLeft() {
         return left;
@@ -146,21 +158,48 @@ public class Sleep {
         this.totalCount = totalCount;
     }
 
+    public double getAvgDecibels() {
+        return avgDecibels;
+    }
+
+    public void setAvgDecibels(double avgDecibels) {
+        this.avgDecibels = avgDecibels;
+    }
+
+    public double getMaxDecibels() {
+        return maxDecibels;
+    }
+
+    public void setMaxDecibels(double maxDecibels) {
+        this.maxDecibels = maxDecibels;
+    }
+
+    public long getSoundSampleCount() {
+        return soundSampleCount;
+    }
+
+    public void setSoundSampleCount(long soundSampleCount) {
+        this.soundSampleCount = soundSampleCount;
+    }
+
     public long storeOnDB(SQLiteDatabase db) {
         ContentValues values = new ContentValues();
-        values.put(LEFT_TITLE,left);
-        values.put(LEFT_COUNT_TITLE,leftCount);
-        values.put(RIGHT_TITLE,right);
-        values.put(RIGHT_COUNT_TITLE,rightCount);
-        values.put(BACK_TITLE,back);
-        values.put(BACK_COUNT_TITLE,backCount);
-        values.put(STOMACH_TITLE,stomach);
-        values.put(STOMACH_COUNT_TITLE,stomachCount);
-        values.put(UP_TITLE,up);
-        values.put(UP_COUNT_TITLE,upCount);
-        values.put(TOTAL_TITLE,total);
-        values.put(TOTAL_COUNT_TITLE,totalCount);
-        values.put(SYNC,sync);
-        return db.insert(TABLE_NAME,null,values);
+        values.put(LEFT_TITLE, left);
+        values.put(LEFT_COUNT_TITLE, leftCount);
+        values.put(RIGHT_TITLE, right);
+        values.put(RIGHT_COUNT_TITLE, rightCount);
+        values.put(BACK_TITLE, back);
+        values.put(BACK_COUNT_TITLE, backCount);
+        values.put(STOMACH_TITLE, stomach);
+        values.put(STOMACH_COUNT_TITLE, stomachCount);
+        values.put(UP_TITLE, up);
+        values.put(UP_COUNT_TITLE, upCount);
+        values.put(TOTAL_TITLE, total);
+        values.put(TOTAL_COUNT_TITLE, totalCount);
+        values.put(AVG_DECIBELS, avgDecibels);
+        values.put(MAX_DECIBELS, maxDecibels);
+        values.put(SOUND_SAMPLE_COUNT, soundSampleCount);
+        values.put(SYNC, sync);
+        return db.insert(TABLE_NAME, null, values);
     }
 }
